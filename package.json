@@ -1,0 +1,59 @@
+{
+  "name": "admiral-hipper",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "NODE_ENV=development nodemon server.js",
+    "lint": "xo",
+    "knex": "knex"
+  },
+  "engines": {
+    "node": ">=12"
+  },
+  "dependencies": {
+    "@phc/pbkdf2": "^1.1.14",
+    "cookie-session": "^2.0.0-beta.3",
+    "cors": "^2.8.5",
+    "csurf": "^1.10.0",
+    "dotenv": "^8.0.0",
+    "ejs": "^2.6.1",
+    "express": "^4.16.4",
+    "helmet": "^3.18.0",
+    "knex": "^0.17.3",
+    "lodash": "^4.17.11",
+    "moment": "^2.24.0",
+    "multer": "^1.4.1",
+    "mysql": "^2.17.1",
+    "nodemailer": "^6.2.1",
+    "ow": "^0.13.2",
+    "passport": "^0.4.0",
+    "passport-facebook": "^3.0.0",
+    "passport-google-oauth20": "^2.0.0",
+    "passport-local": "^1.0.0",
+    "pino": "^5.12.6",
+    "pino-pretty": "^3.1.0",
+    "upash": "^1.0.2"
+  },
+  "devDependencies": {
+    "husky": "^2.3.0",
+    "nodemon": "^1.19.1",
+    "xo": "^0.24.0"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm run lint"
+    }
+  },
+  "xo": {
+    "space": 2,
+    "semicolon": false,
+    "overrides": [
+      {
+        "files": "migrations/**",
+        "rules": {
+          "unicorn/filename-case": "off"
+        }
+      }
+    ]
+  }
+}
