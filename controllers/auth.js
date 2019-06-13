@@ -31,12 +31,12 @@ exports.sendForgotPasswordEmail = async (name, email) => {
   }
 
   if (!user.hasEmail) {
-    throw new AppError('User does not have email or email has not been verified yet', 'USER_NO_EMAIL', {name})
+    throw new AppError('User does not have email or email has not been verified yet', 'USER_NO_EMAIL')
   }
 
   const emailMatch = await user.testEmail(email)
   if (!emailMatch) {
-    throw new AppError('Incorrect user email', 'USER_INCORRECT_EMAIL', {name})
+    throw new AppError('Incorrect user email', 'USER_INCORRECT_EMAIL')
   }
 
   const token = await user.generateRecoverPasswordToken()

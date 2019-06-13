@@ -178,8 +178,8 @@ class User extends Row {
     return upash.verify(hash, password)
   }
 
-  async testEmail(email) {
-    if (!this.isEmailVerified) {
+  async testEmail(email, checkEmailVerified = true) {
+    if (checkEmailVerified && !this.isEmailVerified) {
       return false
     }
 
