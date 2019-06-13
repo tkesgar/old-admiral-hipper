@@ -1,7 +1,7 @@
 const {Router: router} = require('express')
 const {default: ow} = require('ow')
 const handle = require('../lib/handle')
-const auth = require('../controllers/auth')
+const Auth = require('../controllers/auth')
 const {appCallbackUrl} = require('../config/env')
 
 const route = router()
@@ -13,8 +13,7 @@ route.get('/auth', (req, res) => {
     return
   }
 
-  const userData = user.getData('personal')
-  res.json(userData)
+  res.json(user)
 })
 
 route.post('/auth', handle(async (req, res) => {
@@ -22,7 +21,7 @@ route.post('/auth', handle(async (req, res) => {
   ow(name, ow.string)
   ow(password, ow.string)
 
-  const user = await auth.authByPassword(name, password)
+  const user = await Auth.authByPassword(name, password)
   if (!user) {
     res.sendStatus(401)
     return
@@ -50,7 +49,7 @@ route.post('/auth/forgot', handle(async req => {
   ow(name, ow.string)
   ow(email, ow.string)
 
-  await auth.sendForgotPasswordEmail(name, email)
+  await Auth.sendForgotPasswordEmail(name, email)
 }))
 
 route.post('/auth/reset', handle(async req => {
@@ -59,7 +58,7 @@ route.post('/auth/reset', handle(async req => {
   ow(token, ow.string)
   ow(password, ow.string)
 
-  await auth.resetPassword(name, token, password)
+  await Auth.resetPassword(name, token, password)
 }))
 
 route.get('/auth/verify-email', handle(async (req, res) => {
@@ -67,7 +66,7 @@ route.get('/auth/verify-email', handle(async (req, res) => {
   ow(name, ow.string)
   ow(token, ow.string)
 
-  await auth.verifyEmail(name, token)
+  await Auth.verifyEmail(name, token)
 
   res.redirect(`${appCallbackUrl}?info=verify_email_success`)
 }))
