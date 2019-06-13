@@ -1,5 +1,5 @@
 const createApp = require('./lib/create-app')
-const log = require('./utils/log')
+const log = require('./services/log')
 
 const app = createApp()
 

@@ -1,12 +1,19 @@
 const upash = require('upash')
 const moment = require('moment')
 const Row = require('../lib/knex-utils/row')
-const db = require('../utils/database')
+const db = require('../services/database')
 const generateToken = require('../lib/generate-token')
+const {AppError} = require('../utils/error')
 
 const TABLE = 'user'
 
 class User extends Row {
+  static getTokenExpireTime(time = new Date()) {
+    const amount = Number(process.env.TOKEN_EXPIRE_INC_AMOUNT)
+    const unit = process.env.TOKEN_EXPIRE_INC_UNIT
+    return moment(time).add(amount, unit).toDate()
+  }
+
   static async findById(id, conn = db) {
     const [row] = await conn(TABLE).where('id', id)
     return row ? new User(row, conn) : null
@@ -37,21 +44,29 @@ class User extends Row {
       googleId = null
     } = data
 
-    const passwordHash = upash.use('pbkdf2').hash(password)
-    const emailHash = upash.use('pbkdf2').hash(email)
+    const passwordHash = await upash.use('pbkdf2').hash(password)
+    const emailHash = await upash.use('pbkdf2').hash(email)
 
-    const [id] = await conn(TABLE).insert({
-      /* eslint-disable camelcase */
-      name,
-      password_hash: passwordHash,
-      email_hash: emailHash,
-      email_verified: isEmailVerified,
-      facebook_id: facebookId,
-      google_id: googleId
-      /* eslint-enable camelcase */
-    })
+    try {
+      const [id] = await conn(TABLE).insert({
+        /* eslint-disable camelcase */
+        name,
+        password_hash: passwordHash,
+        email_hash: emailHash,
+        email_verified: isEmailVerified,
+        facebook_id: facebookId,
+        google_id: googleId
+        /* eslint-enable camelcase */
+      })
 
-    return User.findById(id)
+      return User.findById(id)
+    } catch (error) {
+      if (error.code === 'ER_DUP_ENTRY') {
+        throw new AppError(`User name ${name} is not available`, 'USERNAME_NOT_AVAILABLE', {name})
+      }
+
+      throw error
+    }
   }
 
   constructor(row, conn = db) {
@@ -76,7 +91,8 @@ class User extends Row {
 
   get recoverPasswordToken() {
     const time = this.getColumn('recover_password_time')
-    if (moment().isAfter(time)) {
+    const expireTime = User.getTokenExpireTime(time)
+    if (moment().isAfter(expireTime)) {
       return null
     }
 
@@ -85,7 +101,8 @@ class User extends Row {
 
   get emailVerifyToken() {
     const time = this.getColumn('email_verify_time')
-    if (moment().isAfter(time)) {
+    const expireTime = User.getTokenExpireTime(time)
+    if (moment().isAfter(expireTime)) {
       return null
     }
 
@@ -170,50 +187,64 @@ class User extends Row {
     return upash.verify(hash, email)
   }
 
-  async generateRecoverPasswordToken() {
+  async generateRecoverPasswordToken(time = new Date()) {
     const token = generateToken()
-    const expire = moment().add(1, 'h').toDate()
 
-    await this.query.update({
+    const data = {
       /* eslint-disable camelcase */
       recover_password_token: token,
-      recover_password_time: expire
+      recover_password_time: time
       /* eslint-enable camelcase */
-    })
+    }
 
-    return {token, expire}
+    await this.query.update(data)
+    Object.assign(this.row, data)
+
+    return token
   }
 
-  async generateEmailVerifyToken() {
+  async generateEmailVerifyToken(time = new Date()) {
     const token = generateToken()
-    const expire = moment().add(1, 'h').toDate()
 
-    await this.query.update({
+    const data = {
       /* eslint-disable camelcase */
       email_verify_token: token,
-      email_verify_time: expire
+      email_verify_time: time
       /* eslint-enable camelcase */
-    })
+    }
 
-    return {token, expire}
+    await this.query.update(data)
+    Object.assign(this.row, data)
+
+    return token
   }
 
   async clearRecoverPasswordToken() {
-    await this.query.update({
+    const data = {
       /* eslint-disable camelcase */
       recover_password_token: null,
       recover_password_time: null
       /* eslint-enable camelcase */
-    })
+    }
+
+    await this.query.update(data)
+    Object.assign(this.row, data)
   }
 
   async clearEmailVerifyToken() {
-    await this.query.update({
+    const data = {
       /* eslint-disable camelcase */
       email_verify_token: null,
       email_verify_time: null
       /* eslint-enable camelcase */
-    })
+    }
+
+    await this.query.update(data)
+    Object.assign(this.row, data)
+  }
+
+  async setEmailVerified() {
+    await this.setColumn('email_verified', true)
   }
 }
 
