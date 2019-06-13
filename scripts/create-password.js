@@ -8,12 +8,18 @@ async function main(...args) {
   const [password, method = 'pbkdf2'] = args
   if (!password) {
     console.log('Usage: create-password <password> (method=pbkdf2)')
+    return
   }
 
-  console.log(await upash.use(method).hash(password))
+  const hash = await upash.use(method).hash(password)
+  console.log(hash)
 }
 
-main(...process.argv.slice(2)).catch(error => {
-  console.error(error)
-  process.exitCode = 1
-})
+main(...process.argv.slice(2))
+  .then(() => {
+    process.exit()
+  })
+  .catch(error => {
+    console.error(error)
+    process.exit(1)
+  })

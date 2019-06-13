@@ -16,3 +16,6 @@ exports.production = production
 
 const baseUrl = process.env.BASE_URL || `http://localhost:${process.env.PORT}`
 exports.baseurl = baseUrl
+
+const appCallbackUrl = `${process.env.APP_BASE_URL}/_callback`
+exports.appCallbackUrl = appCallbackUrl

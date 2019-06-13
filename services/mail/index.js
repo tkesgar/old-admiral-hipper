@@ -1,9 +1,8 @@
 const nodemailer = require('nodemailer')
-const log = require('../log')
 const render = require('./render')
 
-class Mail {
-  static getSMTPTransporter() {
+const defaultTransporter = nodemailer.createTransport(
+  (() => {
     if (process.env.SMTP_CONFIG) {
       return JSON.parse(process.env.SMTP_CONFIG)
     }
@@ -17,52 +16,42 @@ class Mail {
       },
       secure: JSON.parse(process.env.SMTP_SECURE)
     }
-  }
+  })()
+)
 
-  static getDefaults() {
-    return {}
-  }
+exports.defaultTransporter = defaultTransporter
 
-  static createTransport(transporter = Mail.getSMTPTransporter(), defaults = Mail.getDefaults()) {
-    return nodemailer.createTransport(transporter, defaults)
-  }
+async function sendMail(mailOpts = {}, transporter = defaultTransporter) {
+  const {
+    text,
+    html
+  } = mailOpts
 
-  constructor(transport = Mail.createTransport()) {
-    this.transport = transport
-  }
-
-  async send(opts = {}) {
-    const {
-      text,
-      html
-    } = opts
-
-    if (typeof text === 'object') {
-      opts.text = await render(text.template, text.data, text.opts)
-    }
-
-    if (typeof html === 'object') {
-      opts.html = await render(html.template, html.data, html.opts)
-    }
-
-    return this.transport.sendMail(opts)
-  }
-
-  async sendTemplate(to, template, data = {}) {
-    const info = await this.send({
-      to,
-      subject: data.title,
-      html: {
-        template,
-        data,
-        opts: {
-          rmWhitespace: true
-        }
-      }
-    })
-
-    log.debug({info}, 'Email sent')
-  }
+  return transporter.sendMail({
+    ...mailOpts,
+    ...(typeof text === 'object' ? {
+      text: await render(text.template, text.data, text.opts)
+    } : {}),
+    ...(typeof html === 'object' ? {
+      html: await render(html.template, html.data, html.opts)
+    } : {})
+  })
 }
 
-module.exports = Mail
+exports.sendMail = sendMail
+
+async function sendMailFromTemplate(to, template, data = {}) {
+  return sendMail({
+    to,
+    subject: data.title,
+    html: {
+      template,
+      data,
+      opts: {
+        rmWhitespace: true
+      }
+    }
+  })
+}
+
+exports.sendMailFromTemplate = sendMailFromTemplate
