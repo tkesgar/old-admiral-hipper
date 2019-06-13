@@ -1,8 +1,9 @@
 const upash = require('upash')
 const moment = require('moment')
 const Row = require('../lib/knex-utils/row')
-const db = require('../utils/database')
+const db = require('../services/database')
 const generateToken = require('../lib/generate-token')
+const {AppError} = require('../utils/error')
 
 const TABLE = 'user'
 
@@ -37,21 +38,29 @@ class User extends Row {
       googleId = null
     } = data
 
-    const passwordHash = upash.use('pbkdf2').hash(password)
-    const emailHash = upash.use('pbkdf2').hash(email)
+    const passwordHash = await upash.use('pbkdf2').hash(password)
+    const emailHash = await upash.use('pbkdf2').hash(email)
 
-    const [id] = await conn(TABLE).insert({
-      /* eslint-disable camelcase */
-      name,
-      password_hash: passwordHash,
-      email_hash: emailHash,
-      email_verified: isEmailVerified,
-      facebook_id: facebookId,
-      google_id: googleId
-      /* eslint-enable camelcase */
-    })
+    try {
+      const [id] = await conn(TABLE).insert({
+        /* eslint-disable camelcase */
+        name,
+        password_hash: passwordHash,
+        email_hash: emailHash,
+        email_verified: isEmailVerified,
+        facebook_id: facebookId,
+        google_id: googleId
+        /* eslint-enable camelcase */
+      })
 
-    return User.findById(id)
+      return User.findById(id)
+    } catch (error) {
+      if (error.code === 'ER_DUP_ENTRY') {
+        throw new AppError(`User name ${name} is not available`, 'USERNAME_NOT_AVAILABLE', {name})
+      }
+
+      throw error
+    }
   }
 
   constructor(row, conn = db) {
