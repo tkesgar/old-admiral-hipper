@@ -34,7 +34,7 @@ class User extends Row {
     return row ? new User(row, conn) : null
   }
 
-  static async register(data, conn = db) {
+  static async insert(data, conn = db) {
     const {
       name,
       password,
@@ -62,7 +62,7 @@ class User extends Row {
       return User.findById(id)
     } catch (error) {
       if (error.code === 'ER_DUP_ENTRY') {
-        throw new AppError(`User name ${name} is not available`, 'USERNAME_NOT_AVAILABLE', {name})
+        throw new AppError('Name is not available', 'NAME_NOT_AVAILABLE', {name})
       }
 
       throw error
@@ -143,7 +143,15 @@ class User extends Row {
   }
 
   async setName(name) {
-    await this.setColumn('name', name)
+    try {
+      await this.setColumn('name', name)
+    } catch (error) {
+      if (error.code === 'ER_DUP_ENTRY') {
+        throw new AppError('Name is not available', 'NAME_NOT_AVAILABLE', {name})
+      }
+
+      throw error
+    }
   }
 
   async setDisplayName(displayName) {
@@ -157,12 +165,16 @@ class User extends Row {
 
   async setEmail(email) {
     const hash = await upash.use('pbkdf2').hash(email)
-    await this.query.update({
+
+    const data = {
       /* eslint-disable camelcase */
       email_hash: hash,
       email_verified: false
       /* eslint-enable camelcase */
-    })
+    }
+
+    await this.query.update(data)
+    Object.assign(this.row, data)
   }
 
   async setFacebookId(facebookId) {

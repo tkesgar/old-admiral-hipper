@@ -49,7 +49,7 @@ route.post('/auth/forgot', handle(async req => {
   ow(name, ow.string)
   ow(email, ow.string)
 
-  await Auth.sendForgotPasswordEmail(name, email)
+  await Auth.sendResetPasswordToken(name, email)
 }))
 
 route.post('/auth/reset', handle(async req => {
@@ -69,6 +69,15 @@ route.get('/auth/verify-email', handle(async (req, res) => {
   await Auth.verifyEmail(name, token)
 
   res.redirect(`${appCallbackUrl}?info=verify_email_success`)
+}))
+
+route.post('/auth/register', handle(async req => {
+  const {name, password, email} = req.body
+  ow(name, ow.string)
+  ow(password, ow.string)
+  ow(email, ow.string)
+
+  await Auth.register(name, password, email)
 }))
 
 module.exports = route

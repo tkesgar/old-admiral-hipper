@@ -5,7 +5,7 @@ function checkAuth(fn = null) {
       return
     }
 
-    if (fn && !fn(req.user)) {
+    if (fn && !fn(req.user, req)) {
       res.sendStatus(403)
       return
     }

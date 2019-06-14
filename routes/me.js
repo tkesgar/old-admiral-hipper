@@ -13,10 +13,9 @@ route.get('/me', (req, res) => {
 })
 
 route.delete('/me', handle(async req => {
-  const {user, body: {password}} = req
-  ow(password, ow.string)
+  const {user} = req
 
-  await User.deleteUser(user, password)
+  await User.deleteUser(user)
 
   req.logout()
 }))
@@ -25,7 +24,37 @@ route.post('/me/verify-email', handle(async req => {
   const {user, body: {email}} = req
   ow(email, ow.string)
 
-  await User.sendVerifyEmail(user, email)
+  await User.sendEmailVerifyToken(user, email)
+}))
+
+route.put('/me/name', handle(async req => {
+  const {user, body: {name}} = req
+
+  await User.setName(user, name)
+}))
+
+route.put('/me/display-name', handle(async req => {
+  const {user, body: {displayName}} = req
+
+  await User.setDisplayName(user, displayName)
+}))
+
+route.delete('/me/display-name', handle(async req => {
+  const {user} = req
+
+  await User.setDisplayName(user, null)
+}))
+
+route.put('/me/password', handle(async req => {
+  const {user, body: {password}} = req
+
+  await User.setPassword(user, password)
+}))
+
+route.put('/me/email', handle(async req => {
+  const {user, body: {email}} = req
+
+  await User.setEmail(user, email)
 }))
 
 module.exports = route

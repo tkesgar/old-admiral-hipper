@@ -2,6 +2,7 @@ const User = require('../models/user')
 const log = require('../services/log')
 const {AppError} = require('../utils/error')
 const {sendMailFromTemplate} = require('../services/mail')
+const v = require('../utils/validate')
 
 exports.authByPassword = async (name, password) => {
   const user = await User.findByName(name)
@@ -20,23 +21,23 @@ exports.authByPassword = async (name, password) => {
   return user
 }
 
-exports.sendForgotPasswordEmail = async (name, email) => {
+exports.sendResetPasswordToken = async (name, email) => {
   const user = await User.findByName(name)
   if (!user) {
-    throw new AppError('User does not exist', 'USER_NOT_FOUND', {name})
+    throw new AppError('User does not exist', 'NO_USER', {name})
   }
 
   if (user.recoverPasswordToken) {
-    throw new AppError('Current recovery password token has not expired', 'TOKEN_NOT_EXPIRED')
+    throw new AppError('Current token has not expired', 'TOKEN_EXIST')
   }
 
   if (!user.hasEmail) {
-    throw new AppError('User does not have email or email has not been verified yet', 'USER_NO_EMAIL')
+    throw new AppError('User does not have email address or email address has not been verified', 'NO_EMAIL')
   }
 
   const emailMatch = await user.testEmail(email)
   if (!emailMatch) {
-    throw new AppError('Incorrect user email', 'USER_INCORRECT_EMAIL')
+    throw new AppError('Incorrect email address', 'INCORRECT_EMAILADDR')
   }
 
   const token = await user.generateRecoverPasswordToken()
@@ -47,21 +48,23 @@ exports.sendForgotPasswordEmail = async (name, email) => {
       name: user.name,
       displayName: user.displayName
     },
-    link: _getRecoverPasswordLink(user.name, token)
+    link: _getResetPasswordLink(user.name, token)
   })
 
   log.debug({info}, 'Email sent')
 }
 
 exports.resetPassword = async (name, token, password) => {
+  v.validatePassword(password)
+
   const user = await User.findByName(name)
   if (!user) {
-    throw new AppError('User does not exist', 'USER_NOT_FOUND', {name})
+    throw new AppError('User does not exist', 'NO_USER', {name})
   }
 
   const userToken = user.recoverPasswordToken
   if (!userToken) {
-    throw new AppError('User does not have token or token has expired', 'NO_TOKEN')
+    throw new AppError('Token does not exist or has expired', 'NO_TOKEN')
   }
 
   if (token !== userToken) {
@@ -76,12 +79,12 @@ exports.resetPassword = async (name, token, password) => {
 exports.verifyEmail = async (name, token) => {
   const user = await User.findByName(name)
   if (!user) {
-    throw new AppError('User does not exist', 'USER_NOT_FOUND', {name})
+    throw new AppError('User does not exist', 'NO_USER', {name})
   }
 
   const userToken = user.emailVerifyToken
   if (!userToken) {
-    throw new AppError('User does not have token or token has expired', 'NO_TOKEN')
+    throw new AppError('Token does not exist or has expired', 'NO_TOKEN')
   }
 
   if (token !== userToken) {
@@ -93,6 +96,17 @@ exports.verifyEmail = async (name, token) => {
   await user.setEmailVerified()
 }
 
-function _getRecoverPasswordLink(name, token) {
+exports.register = async (name, password, email) => {
+  v.validateName(name)
+  v.validatePassword(password)
+  v.validateEmail(email)
+
+  const user = await User.insert({name, password, email})
+
+  log.debug({user}, 'New user registered')
+  return user
+}
+
+function _getResetPasswordLink(name, token) {
   return `${process.env.APP_BASE_URL}/recover-password?user=${name}&token=${token}`
 }

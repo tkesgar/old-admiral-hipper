@@ -2,28 +2,25 @@ const log = require('../services/log')
 const {AppError} = require('../utils/error')
 const {sendMailFromTemplate} = require('../services/mail')
 const {baseurl} = require('../config/env')
+const v = require('../utils/validate')
 
-exports.deleteUser = async (user, password) => {
-  const passwordMatch = await user.testPassword(password)
-  if (!passwordMatch) {
-    throw new AppError('Invalid password', 'INVALID_PASSWORD')
-  }
-
+exports.deleteUser = async user => {
   await user.delete()
+  log.debug({user}, 'User deleted')
 }
 
-exports.sendVerifyEmail = async (user, email) => {
+exports.sendEmailVerifyToken = async (user, email) => {
   if (user.hasEmail) {
-    throw new AppError('User email has been verified', 'USER_EMAIL_VERIFIED')
+    throw new AppError('Email address has been verified', 'EMAILADDR_VERIFIED')
   }
 
   if (user.emailVerifyToken) {
-    throw new AppError('Current email verification token has not been expired', 'TOKEN_NOT_EXPIRED')
+    throw new AppError('Current token has not expired', 'TOKEN_EXIST')
   }
 
   const emailMatch = await user.testEmail(email, false)
   if (!emailMatch) {
-    throw new AppError('Incorrect user email', 'USER_INCORRECT_EMAIL')
+    throw new AppError('Incorrect email address', 'INCORRECT_EMAILADDR')
   }
 
   const token = await user.generateEmailVerifyToken()
@@ -37,7 +34,31 @@ exports.sendVerifyEmail = async (user, email) => {
     link: _getEmailVerifyLink(user.name, token)
   })
 
-  log.debug({info}, 'Email sent')
+  log.debug({info}, 'Email verify token sent')
+}
+
+exports.setName = async (user, name) => {
+  v.validateName(name)
+
+  await user.setName(name)
+}
+
+exports.setDisplayName = async (user, displayName) => {
+  v.validateDisplayName(displayName)
+
+  await user.setDisplayName(displayName)
+}
+
+exports.setPassword = async (user, password) => {
+  v.validatePassword(password)
+
+  await user.setPassword(password)
+}
+
+exports.setEmail = async (user, email) => {
+  v.validateEmail(email)
+
+  await user.setEmail(email)
 }
 
 function _getEmailVerifyLink(name, token) {
