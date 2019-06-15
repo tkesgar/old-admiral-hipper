@@ -3,6 +3,7 @@ const {default: ow} = require('ow')
 const handle = require('../lib/handle')
 const Auth = require('../controllers/auth')
 const {appCallbackUrl} = require('../config/env')
+const {checkRecaptcha} = require('../lib/check-recaptcha')
 
 const route = router()
 
@@ -16,7 +17,7 @@ route.get('/auth', (req, res) => {
   res.json(user)
 })
 
-route.post('/auth', handle(async (req, res) => {
+route.post('/auth/login', handle(async (req, res) => {
   const {name, password} = req.body
   ow(name, ow.string)
   ow(password, ow.string)
@@ -71,13 +72,16 @@ route.get('/auth/verify-email', handle(async (req, res) => {
   res.redirect(`${appCallbackUrl}?info=verify_email_success`)
 }))
 
-route.post('/auth/register', handle(async req => {
-  const {name, password, email} = req.body
-  ow(name, ow.string)
-  ow(password, ow.string)
-  ow(email, ow.string)
+route.post('/auth/register',
+  checkRecaptcha(),
+  handle(async req => {
+    const {name, password, email} = req.body
+    ow(name, ow.string)
+    ow(password, ow.string)
+    ow(email, ow.string)
 
-  await Auth.register(name, password, email)
-}))
+    await Auth.register(name, password, email)
+  })
+)
 
 module.exports = route
