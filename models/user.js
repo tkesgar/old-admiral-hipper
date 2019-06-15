@@ -1,5 +1,6 @@
 const upash = require('upash')
 const moment = require('moment')
+const mailHash = require('../services/mail-hash')
 const Row = require('../lib/knex-utils/row')
 const db = require('../services/database')
 const generateToken = require('../lib/generate-token')
@@ -8,12 +9,6 @@ const {AppError} = require('../utils/error')
 const TABLE = 'user'
 
 class User extends Row {
-  static getTokenExpireTime(time = new Date()) {
-    const amount = Number(process.env.TOKEN_EXPIRE_INC_AMOUNT)
-    const unit = process.env.TOKEN_EXPIRE_INC_UNIT
-    return moment(time).add(amount, unit).toDate()
-  }
-
   static async findById(id, conn = db) {
     const [row] = await conn(TABLE).where('id', id)
     return row ? new User(row, conn) : null
@@ -21,6 +16,12 @@ class User extends Row {
 
   static async findByName(name, conn = db) {
     const [row] = await conn(TABLE).where('name', name)
+    return row ? new User(row, conn) : null
+  }
+
+  static async findByEmail(email, conn = db) {
+    const hash = await mailHash(email)
+    const [row] = await conn(TABLE).where('email_hash', hash)
     return row ? new User(row, conn) : null
   }
 
@@ -34,7 +35,7 @@ class User extends Row {
     return row ? new User(row, conn) : null
   }
 
-  static async insert(data, conn = db) {
+  static async insert(data) {
     const {
       name,
       password,
@@ -44,11 +45,19 @@ class User extends Row {
       googleId = null
     } = data
 
-    const passwordHash = await upash.use('pbkdf2').hash(password)
-    const emailHash = await upash.use('pbkdf2').hash(email)
+    const id = await db.transaction(async trx => {
+      if (await User.findByName(name, trx)) {
+        throw new AppError('Name is not available', 'NAME_NOT_AVAILABLE', {name})
+      }
 
-    try {
-      const [id] = await conn(TABLE).insert({
+      if (await User.findByEmail(email, trx)) {
+        throw new AppError('Email is already registered', 'EMAIL_REGISTERED', {email})
+      }
+
+      const passwordHash = await upash.use('pbkdf2').hash(password)
+      const emailHash = await mailHash(email)
+
+      const [id] = await trx(TABLE).insert({
         /* eslint-disable camelcase */
         name,
         password_hash: passwordHash,
@@ -59,14 +68,10 @@ class User extends Row {
         /* eslint-enable camelcase */
       })
 
-      return User.findById(id)
-    } catch (error) {
-      if (error.code === 'ER_DUP_ENTRY') {
-        throw new AppError('Name is not available', 'NAME_NOT_AVAILABLE', {name})
-      }
+      return id
+    })
 
-      throw error
-    }
+    return User.findById(id)
   }
 
   constructor(row, conn = db) {
@@ -91,7 +96,7 @@ class User extends Row {
 
   get recoverPasswordToken() {
     const time = this.getColumn('recover_password_time')
-    const expireTime = User.getTokenExpireTime(time)
+    const expireTime = _getExpireTime(time)
     if (moment().isAfter(expireTime)) {
       return null
     }
@@ -101,7 +106,7 @@ class User extends Row {
 
   get emailVerifyToken() {
     const time = this.getColumn('email_verify_time')
-    const expireTime = User.getTokenExpireTime(time)
+    const expireTime = _getExpireTime(time)
     if (moment().isAfter(expireTime)) {
       return null
     }
@@ -164,7 +169,7 @@ class User extends Row {
   }
 
   async setEmail(email) {
-    const hash = await upash.use('pbkdf2').hash(email)
+    const hash = await mailHash(email)
 
     const data = {
       /* eslint-disable camelcase */
@@ -195,8 +200,7 @@ class User extends Row {
       return false
     }
 
-    const hash = this.getColumn('email_hash')
-    return upash.verify(hash, email)
+    return (await mailHash(email)) === this.getColumn('email_hash')
   }
 
   async generateRecoverPasswordToken(time = new Date()) {
@@ -261,3 +265,7 @@ class User extends Row {
 }
 
 module.exports = User
+
+function _getExpireTime(time = new Date()) {
+  return moment(time).add(1, 'hour').toDate()
+}
