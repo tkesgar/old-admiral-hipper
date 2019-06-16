@@ -2,8 +2,10 @@ const {Router: router} = require('express')
 const {default: ow} = require('ow')
 const handle = require('../lib/handle')
 const Auth = require('../controllers/auth')
-const {appCallbackUrl} = require('../config/env')
+const {toggle, appCallbackUrl} = require('../config/env')
 const {checkRecaptcha} = require('../lib/check-recaptcha')
+const toggleRoute = require('../middlewares/toggle-route')
+const passport = require('../services/passport')
 
 const route = router()
 
@@ -73,6 +75,7 @@ route.get('/auth/verify-email', handle(async (req, res) => {
 }))
 
 route.post('/auth/register',
+  toggleRoute(toggle.register),
   checkRecaptcha(),
   handle(async req => {
     const {name, password, email} = req.body
@@ -82,6 +85,15 @@ route.post('/auth/register',
 
     await Auth.register(name, password, email)
   })
+)
+
+route.get('/auth/google', passport.authenticate('google'))
+
+route.get('/auth/google/_callback',
+  passport.authenticate('google'),
+  (req, res) => {
+    res.redirect(`${appCallbackUrl}?info=auth_google`)
+  }
 )
 
 module.exports = route

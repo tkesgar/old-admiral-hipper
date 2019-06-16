@@ -30,16 +30,17 @@ class User extends Row {
     return row ? new User(row, conn) : null
   }
 
-  static async findByGoogleId(facebookId, conn = db) {
-    const [row] = await conn(TABLE).where('google_id', facebookId)
+  static async findByGoogleId(googleId, conn = db) {
+    const [row] = await conn(TABLE).where('google_id', googleId)
     return row ? new User(row, conn) : null
   }
 
   static async insert(data) {
     const {
-      name,
-      password,
       email,
+      name = null,
+      displayName = null,
+      password = null,
       isEmailVerified = false,
       facebookId = null,
       googleId = null
@@ -54,12 +55,13 @@ class User extends Row {
         throw new AppError('Email is already registered', 'EMAIL_REGISTERED', {email})
       }
 
-      const passwordHash = await upash.use('pbkdf2').hash(password)
+      const passwordHash = password ? await upash.use('pbkdf2').hash(password) : null
       const emailHash = await mailHash(email)
 
       const [id] = await trx(TABLE).insert({
         /* eslint-disable camelcase */
         name,
+        display_name: displayName,
         password_hash: passwordHash,
         email_hash: emailHash,
         email_verified: isEmailVerified,
@@ -79,7 +81,7 @@ class User extends Row {
   }
 
   get name() {
-    return this.getColumn('name')
+    return this.getColumn('name') || 'guest'
   }
 
   get displayName() {

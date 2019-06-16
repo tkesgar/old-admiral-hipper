@@ -1,5 +1,6 @@
 const {Passport} = require('passport')
 const User = require('../../models/user')
+const googleStrategy = require('./google')
 
 const passport = new Passport()
 
@@ -22,5 +23,7 @@ passport.deserializeUser((id, done) => {
     done(null, user)
   })().catch(done)
 })
+
+passport.use('google', googleStrategy)
 
 module.exports = passport

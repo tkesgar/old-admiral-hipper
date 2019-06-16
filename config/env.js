@@ -19,3 +19,8 @@ exports.baseurl = baseUrl
 
 const appCallbackUrl = `${process.env.APP_BASE_URL}/_callback`
 exports.appCallbackUrl = appCallbackUrl
+
+const toggle = {
+  register: process.env.TOGGLE_ROUTE_REGISTER === 'on'
+}
+exports.toggle = toggle
