@@ -92,7 +92,7 @@ route.get('/auth/google', passport.authenticate('google'))
 route.get('/auth/google/_callback',
   passport.authenticate('google'),
   (req, res) => {
-    res.redirect(`${appCallbackUrl}?info=auth_google`)
+    res.redirect(`${appCallbackUrl}?info=auth`)
   }
 )
 
