@@ -1,5 +1,4 @@
 const {Router: router} = require('express')
-const {default: ow} = require('ow')
 const checkAuth = require('../middlewares/check-auth')
 const handle = require('../lib/handle')
 const User = require('../controllers/user')
@@ -9,22 +8,17 @@ const route = router()
 route.use('/me', checkAuth())
 
 route.get('/me', (req, res) => {
-  res.json(req.user.getData('personal'))
+  const {user} = req
+
+  res.json(user.getData('personal'))
 })
 
 route.delete('/me', handle(async req => {
   const {user} = req
 
-  await User.deleteUser(user)
+  await User.delete(user)
 
   req.logout()
-}))
-
-route.post('/me/verify-email', handle(async req => {
-  const {user, body: {email}} = req
-  ow(email, ow.string)
-
-  await User.sendEmailVerifyToken(user, email)
 }))
 
 route.put('/me/name', handle(async req => {

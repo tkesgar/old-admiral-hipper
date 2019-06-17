@@ -1,6 +1,6 @@
 const upash = require('upash')
 const moment = require('moment')
-const mailHash = require('../services/mail-hash')
+const mailHash = require('../utils/mail-hash')
 const Row = require('../lib/knex-utils/row')
 const db = require('../services/database')
 const generateToken = require('../lib/generate-token')
@@ -46,7 +46,7 @@ class User extends Row {
       googleId = null
     } = data
 
-    const id = await db.transaction(async trx => {
+    return db.transaction(async trx => {
       if (await User.findByName(name, trx)) {
         throw new AppError('Name is not available', 'NAME_NOT_AVAILABLE', {name})
       }
@@ -72,8 +72,6 @@ class User extends Row {
 
       return id
     })
-
-    return User.findById(id)
   }
 
   constructor(row, conn = db) {
@@ -143,10 +141,6 @@ class User extends Row {
           displayName: this.displayName
         }
     }
-  }
-
-  toJSON() {
-    return this.getData()
   }
 
   async setName(name) {

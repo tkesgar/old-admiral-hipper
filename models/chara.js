@@ -77,10 +77,6 @@ class Chara extends Row {
       bio: this.bio
     }
   }
-
-  toJSON() {
-    return this.getData()
-  }
 }
 
 module.exports = Chara

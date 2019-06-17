@@ -1,5 +1,6 @@
 const {default: ow} = require('ow')
-const {AppError} = require('../utils/error')
+const {AppError} = require('../error')
+const isValidCharaInfo = require('./chara-info')
 
 // Regex source: https://html.spec.whatwg.org/#e-mail-state-(type=email)
 // eslint-disable-next-line no-useless-escape
@@ -40,3 +41,16 @@ exports.validatePassword = password => validate(
   'Password is not allowed',
   'PASSWORD_NOT_ALLOWED'
 )
+
+exports.validateBio = bio => validate(
+  bio,
+  ow.any(ow.null, ow.string.nonEmpty.maxLength(65535)),
+  'Biodata is not allowed',
+  'BIO_NOT_ALLOWED'
+)
+
+exports.validateCharaInfo = (key, value) => {
+  if (!isValidCharaInfo(key, value)) {
+    throw new AppError('Chara info is not allowed', 'CHARA_INFO_NOT_ALLOWED', {value: {key, value}})
+  }
+}

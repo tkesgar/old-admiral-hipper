@@ -18,7 +18,7 @@ route.post('/chara',
     ow(name, ow.string)
     ow(name, ow.any(ow.nullOrUndefined, ow.string))
 
-    await Chara.create(user.id, name, bio)
+    await Chara.insert(user.id, name, bio)
   })
 )
 
@@ -39,15 +39,73 @@ route.get('/chara/:key', (req, res) => {
 })
 
 route.delete('/chara/:key',
-  _checkCharaOwner(),
+  _mustBeCharaOwner(),
   handle(async req => {
     const {chara} = req
-    await Chara.remove(chara)
+    await Chara.delete(chara)
   })
 )
 
+// TODO Implementasi CharaInfo.updateManyInfo (update banyak key untuk chara_id tertentu)
+// TODO Implementasi CharaInfo.deleteManyInfo (delete banyak key untuk chara_id tertentu)
+
+route.get('/chara/:key/info', handle(async req => {
+  const {chara} = req
+  return Chara.findAllInfo(chara.id)
+}))
+
+route.post('/chara/:key/info',
+  _mustBeCharaOwner(),
+  handle(async req => {
+    const {chara, body: {entries}} = req
+    await Chara.insertManyInfo(chara, entries)
+  })
+)
+
+route.put('/chara/:key/info',
+  _mustBeCharaOwner(),
+  // Endpoint untuk CharaInfo.updateManyInfo
+  (req, res) => res.sendStatus(501)
+)
+
+route.delete('/chara/:key/info',
+  _mustBeCharaOwner(),
+  // Endpoint untuk CharaInfo.deleteAllCharaInfo
+  (req, res) => res.sendStatus(501)
+)
+
+route.use('/chara/:key/info/:infoKey', handle(async (req, res) => {
+  const {chara, params: {infoKey: key}} = req
+
+  const charaInfo = await Chara.findInfoByCharaKey(chara, key)
+  if (!charaInfo) {
+    res.sendStatus(404)
+    return
+  }
+
+  req.charaInfo = charaInfo
+}, true))
+
+route.get('/chara/:key/info/:infoKey', (req, res) => {
+  const {charaInfo} = req
+
+  res.json(charaInfo)
+})
+
+route.put('/chara/:key/info/:infoKey', handle(async req => {
+  const {charaInfo, body: {value}} = req
+
+  await Chara.updateInfo(charaInfo, value)
+}))
+
+route.delete('/chara/:key/info/:infoKey', handle(async req => {
+  const {charaInfo} = req
+
+  await Chara.deleteInfo(charaInfo)
+}))
+
 module.exports = route
 
-function _checkCharaOwner() {
+function _mustBeCharaOwner() {
   return checkAuth((user, req) => req.chara.userId === req.user.id)
 }

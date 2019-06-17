@@ -3,8 +3,13 @@ const {AppError} = require('../utils/error')
 const {sendMailFromTemplate} = require('../services/mail')
 const {baseurl} = require('../config/env')
 const v = require('../utils/validate')
+const User = require('../models/user')
 
-exports.deleteUser = async user => {
+exports.find = async key => {
+  return (await User.findById(key)) || (await User.findByName(key)) || null
+}
+
+exports.delete = async user => {
   await user.delete()
   log.debug({user}, 'User deleted')
 }
