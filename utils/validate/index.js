@@ -1,6 +1,6 @@
 const {default: ow} = require('ow')
 const {AppError} = require('../error')
-const isValidCharaInfo = require('./chara-info')
+const {isValidCharaInfo, isValidCharaInfoEntries} = require('./chara-info')
 
 // Regex source: https://html.spec.whatwg.org/#e-mail-state-(type=email)
 // eslint-disable-next-line no-useless-escape
@@ -52,5 +52,11 @@ exports.validateBio = bio => validate(
 exports.validateCharaInfo = (key, value) => {
   if (!isValidCharaInfo(key, value)) {
     throw new AppError('Chara info is not allowed', 'CHARA_INFO_NOT_ALLOWED', {value: {key, value}})
+  }
+}
+
+exports.validateCharaInfoEntries = entries => {
+  if (!isValidCharaInfoEntries(entries)) {
+    throw new AppError('Chara info set is not allowed', 'CHARA_INFO_ENTRIES_NOT_ALLOWED')
   }
 }

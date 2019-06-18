@@ -1,14 +1,10 @@
 const Row = require('../lib/knex-utils/row')
 const db = require('../services/database')
-const {CUSTOM_KEY_PREFIX} = require('../utils/validate/chara-info')
+const {AppError} = require('../utils/error')
 
 const TABLE = 'chara_info'
 
 class CharaInfo extends Row {
-  static get CUSTOM_KEY_PREFIX() {
-    return CUSTOM_KEY_PREFIX
-  }
-
   static async findById(id, conn = db) {
     const [row] = await conn(TABLE).where('id', id)
     return row ? new CharaInfo(row, conn) : null
@@ -20,10 +16,11 @@ class CharaInfo extends Row {
   }
 
   static async findAllByChara(charaId, conn = db) {
-    return conn(TABLE).where('chara_id', charaId).map(row => new CharaInfo(row, conn))
+    return conn(TABLE).where('chara_id', charaId)
+      .map(row => new CharaInfo(row, conn))
   }
 
-  static async insert(data, conn = db) {
+  static async insert(data) {
     const {
       charaId,
       key,
@@ -31,45 +28,56 @@ class CharaInfo extends Row {
       type: insertType = null
     } = data
 
-    const type = _getType(insertType, value)
+    return db.transaction(async trx => {
+      if (CharaInfo.findByCharaKey(charaId, key)) {
+        throw new AppError('Info for chara already exists', 'INFO_EXIST', {charaId, key})
+      }
 
-    const [id] = await conn(TABLE).insert({
-      /* eslint-disable camelcase */
-      chara_id: charaId,
-      key,
-      type,
-      ..._getColumnValues(type, value)
-      /* eslint-enable camelcase */
-    })
-
-    return id
-  }
-
-  static async insertMany(data, conn = db) {
-    const {
-      entries,
-      charaId: insertCharaId = null
-    } = data
-
-    await conn(TABLE).insert(entries.map(entry => {
-      const {
-        key,
-        insertType = null,
-        value
-      } = entry
-
-      const charaId = insertCharaId || entry.charaId
       const type = _getType(insertType, value)
 
-      return {
+      const [id] = await trx(TABLE).insert({
         /* eslint-disable camelcase */
         chara_id: charaId,
         key,
         type,
         ..._getColumnValues(type, value)
         /* eslint-enable camelcase */
+      })
+
+      return id
+    })
+  }
+
+  static async insertMany(entries) {
+    return db.transaction(async trx => {
+      const count = await trx(TABLE)
+        .whereIn(['chara_id', 'key'], entries.map(entry => [entry.charaId, entry.key]))
+        .count()
+
+      if (count > 0) {
+        throw new AppError('Info for chara already exists', 'INFO_EXIST')
       }
-    }))
+
+      await trx(TABLE).insert(entries.map(entry => {
+        const {
+          charaId,
+          key,
+          value,
+          type: insertType = null
+        } = entry
+
+        const type = _getType(insertType, value)
+
+        return {
+          /* eslint-disable camelcase */
+          chara_id: charaId,
+          key,
+          type,
+          ..._getColumnValues(type, value)
+          /* eslint-enable camelcase */
+        }
+      }))
+    })
   }
 
   constructor(row, conn = db) {
@@ -85,7 +93,7 @@ class CharaInfo extends Row {
   }
 
   get isCustom() {
-    return this.key.startsWith(CharaInfo.CUSTOM_KEY_PREFIX)
+    return this.key.startsWith('x_')
   }
 
   get type() {

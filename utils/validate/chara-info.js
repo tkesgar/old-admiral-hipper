@@ -1,12 +1,10 @@
 /* eslint-disable camelcase */
-
-const CUSTOM_KEY_PREFIX = 'x_'
-exports.CUSTOM_KEY_PREFIX = CUSTOM_KEY_PREFIX
+const {toggle} = require('../../config/env')
 
 const TYPE_INTEGER = 'i'
 const TYPE_STRING = 's'
 
-const KEY_VALUE_INFO = {
+const VALUE_INFO = {
   full_name: {
     type: TYPE_STRING
   },
@@ -107,16 +105,53 @@ const KEY_VALUE_INFO = {
   }
 }
 
-function isValidCharaInfo(key, value) {
+const SET_INFO = {
+  birthday: {
+    keys: ['birthday_d', 'birthday_m'],
+    test: (day, month) => {
+      if ([4, 6, 9, 11].includes(month)) {
+        return day <= 30
+      }
+
+      if ([1, 3, 5, 7, 8, 10, 12].includes(month)) {
+        return day <= 31
+      }
+
+      if (month === 2) {
+        return day <= 29
+      }
+
+      return false
+    }
+  },
+  threesizes: {
+    keys: ['threesizes_b', 'threesizes_w', 'threesizes_h']
+  },
+  fav_color: {
+    keys: ['fav_color_r', 'fav_color_g', 'fav_color_b']
+  },
+  hair_color: {
+    keys: ['hair_color_r', 'hair_color_g', 'hair_color_b']
+  },
+  eye_color: {
+    keys: ['eye_color_r', 'eye_color_g', 'eye_color_b']
+  }
+}
+
+function isValidCharaInfo({key, value}) {
   if (!/^(x_)?[a-z_]+$/.test(key)) {
     return false
   }
 
-  if (key.startsWith(CUSTOM_KEY_PREFIX)) {
+  if (key.startsWith('x_')) {
+    if (!toggle.customCharaInfo) {
+      return false
+    }
+
     return true
   }
 
-  const valueInfo = KEY_VALUE_INFO[key]
+  const valueInfo = VALUE_INFO[key]
   if (!valueInfo) {
     return false
   }
@@ -163,6 +198,38 @@ function isValidCharaInfo(key, value) {
       return false
     }
   }
+
+  return true
 }
 
 exports.isValidCharaInfo = isValidCharaInfo
+
+function isValidCharaInfoEntries(entries, validateEntry = true) {
+  if (validateEntry) {
+    for (const {key, value} of entries) {
+      if (!isValidCharaInfo(key, value)) {
+        return false
+      }
+    }
+  }
+
+  for (const {key} of entries) {
+    for (const setInfo of Object.values(SET_INFO)) {
+      const {keys} = setInfo
+      if (keys.includes(key) && keys.find(searchKey => !entries.find(entry => entry.key === searchKey))) {
+        return false
+      }
+
+      const {test} = setInfo
+      if (test) {
+        if (!test(...keys.map(key => entries.find(entry => entry.key === key).value))) {
+          return false
+        }
+      }
+    }
+  }
+
+  return true
+}
+
+exports.isValidCharaInfoEntries = isValidCharaInfoEntries

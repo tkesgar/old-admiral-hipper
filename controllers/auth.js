@@ -95,7 +95,7 @@ exports.verifyEmail = async (name, token) => {
     }
 
     await user.clearEmailVerifyToken()
-    await user.setEmailVerified()
+    await user.setEmailVerified(true)
   })
 }
 
@@ -104,10 +104,7 @@ exports.register = async (name, password, email) => {
   v.validatePassword(password)
   v.validateEmail(email)
 
-  const userId = await User.insert({name, password, email})
-
-  log.debug({userId}, 'New user registered')
-  return User.findById(userId)
+  await User.insert({name, password, email})
 }
 
 function _getResetPasswordLink(name, token) {

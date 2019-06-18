@@ -178,6 +178,10 @@ class User extends Row {
     Object.assign(this.row, data)
   }
 
+  async setEmailVerified(isEmailVerified) {
+    await this.setColumn('email_verified', isEmailVerified)
+  }
+
   async setFacebookId(facebookId) {
     await this.setColumn('facebook_id', facebookId)
   }
@@ -253,10 +257,6 @@ class User extends Row {
 
     await this.query.update(data)
     Object.assign(this.row, data)
-  }
-
-  async setEmailVerified() {
-    await this.setColumn('email_verified', true)
   }
 }
 
