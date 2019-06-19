@@ -35,7 +35,7 @@ class User extends Row {
     return row ? new User(row, conn) : null
   }
 
-  static async insert(data) {
+  static async insert(data, conn = db) {
     const {
       email,
       name = null,
@@ -46,32 +46,30 @@ class User extends Row {
       googleId = null
     } = data
 
-    return db.transaction(async trx => {
-      if (await User.findByName(name, trx)) {
-        throw new AppError('Name is not available', 'NAME_NOT_AVAILABLE', {name})
-      }
+    if (await User.findByName(name, conn)) {
+      throw new AppError('Name is not available', 'NAME_NOT_AVAILABLE', {name})
+    }
 
-      if (await User.findByEmail(email, trx)) {
-        throw new AppError('Email is already registered', 'EMAIL_REGISTERED', {email})
-      }
+    if (await User.findByEmail(email, conn)) {
+      throw new AppError('Email is already registered', 'EMAIL_REGISTERED', {email})
+    }
 
-      const passwordHash = password ? await upash.use('pbkdf2').hash(password) : null
-      const emailHash = await mailHash(email)
+    const passwordHash = password ? await upash.use('pbkdf2').hash(password) : null
+    const emailHash = await mailHash(email)
 
-      const [id] = await trx(TABLE).insert({
-        /* eslint-disable camelcase */
-        name,
-        display_name: displayName,
-        password_hash: passwordHash,
-        email_hash: emailHash,
-        email_verified: isEmailVerified,
-        facebook_id: facebookId,
-        google_id: googleId
-        /* eslint-enable camelcase */
-      })
-
-      return id
+    const [id] = await conn(TABLE).insert({
+      /* eslint-disable camelcase */
+      name,
+      display_name: displayName,
+      password_hash: passwordHash,
+      email_hash: emailHash,
+      email_verified: isEmailVerified,
+      facebook_id: facebookId,
+      google_id: googleId
+      /* eslint-enable camelcase */
     })
+
+    return id
   }
 
   constructor(row, conn = db) {

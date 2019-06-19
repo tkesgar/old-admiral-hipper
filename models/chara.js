@@ -15,28 +15,26 @@ class Chara extends Row {
     return row ? new Chara(row, conn) : null
   }
 
-  static async insert(data) {
+  static async insert(data, conn = db) {
     const {
       userId,
       name,
       bio = null
     } = data
 
-    return db.transaction(async trx => {
-      if (await Chara.findByName(name, trx)) {
-        throw new AppError('Name is not available', 'NAME_NOT_AVAILABLE', {name})
-      }
+    if (await Chara.findByName(name, conn)) {
+      throw new AppError('Name is not available', 'NAME_NOT_AVAILABLE', {name})
+    }
 
-      const [id] = await trx(TABLE).insert({
-        /* eslint-disable camelcase */
-        user_id: userId,
-        name,
-        bio
-        /* eslint-enable camelcase */
-      })
-
-      return id
+    const [id] = await conn(TABLE).insert({
+      /* eslint-disable camelcase */
+      user_id: userId,
+      name,
+      bio
+      /* eslint-enable camelcase */
     })
+
+    return id
   }
 
   constructor(row, conn = db) {

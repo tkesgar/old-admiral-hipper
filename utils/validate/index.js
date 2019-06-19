@@ -60,3 +60,10 @@ exports.validateCharaInfoEntries = entries => {
     throw new AppError('Chara info set is not allowed', 'CHARA_INFO_ENTRIES_NOT_ALLOWED')
   }
 }
+
+exports.validateCharaFileKey = key => validate(
+  key,
+  ow.string.oneOf(['avatar', 'portrait', 'fullbody']),
+  'Chara file key is not allowed',
+  'CHARA_FILE_KEY_NOT_ALLOWED'
+)

@@ -20,7 +20,7 @@ class CharaInfo extends Row {
       .map(row => new CharaInfo(row, conn))
   }
 
-  static async insert(data) {
+  static async insert(data, conn = db) {
     const {
       charaId,
       key,
@@ -28,56 +28,52 @@ class CharaInfo extends Row {
       type: insertType = null
     } = data
 
-    return db.transaction(async trx => {
-      if (CharaInfo.findByCharaKey(charaId, key, trx)) {
-        throw new AppError('Info for chara already exists', 'INFO_EXIST', {charaId, key})
-      }
+    if (CharaInfo.findByCharaKey(charaId, key, conn)) {
+      throw new AppError('Info for chara already exists', 'INFO_EXIST', {charaId, key})
+    }
+
+    const type = _getType(insertType, value)
+
+    const [id] = await conn(TABLE).insert({
+      /* eslint-disable camelcase */
+      chara_id: charaId,
+      key,
+      type,
+      ..._getColumnValues(type, value)
+      /* eslint-enable camelcase */
+    })
+
+    return id
+  }
+
+  static async insertMany(entries, conn = db) {
+    const count = await conn(TABLE)
+      .whereIn(['chara_id', 'key'], entries.map(entry => [entry.charaId, entry.key]))
+      .count()
+
+    if (count > 0) {
+      throw new AppError('Info for chara already exists', 'INFO_EXIST')
+    }
+
+    await conn(TABLE).insert(entries.map(entry => {
+      const {
+        charaId,
+        key,
+        value,
+        type: insertType = null
+      } = entry
 
       const type = _getType(insertType, value)
 
-      const [id] = await trx(TABLE).insert({
+      return {
         /* eslint-disable camelcase */
         chara_id: charaId,
         key,
         type,
         ..._getColumnValues(type, value)
         /* eslint-enable camelcase */
-      })
-
-      return id
-    })
-  }
-
-  static async insertMany(entries) {
-    return db.transaction(async trx => {
-      const count = await trx(TABLE)
-        .whereIn(['chara_id', 'key'], entries.map(entry => [entry.charaId, entry.key]))
-        .count()
-
-      if (count > 0) {
-        throw new AppError('Info for chara already exists', 'INFO_EXIST')
       }
-
-      await trx(TABLE).insert(entries.map(entry => {
-        const {
-          charaId,
-          key,
-          value,
-          type: insertType = null
-        } = entry
-
-        const type = _getType(insertType, value)
-
-        return {
-          /* eslint-disable camelcase */
-          chara_id: charaId,
-          key,
-          type,
-          ..._getColumnValues(type, value)
-          /* eslint-enable camelcase */
-        }
-      }))
-    })
+    }))
   }
 
   constructor(row, conn = db) {

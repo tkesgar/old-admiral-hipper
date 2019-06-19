@@ -3,10 +3,7 @@ const fs = require('fs')
 const path = require('path')
 const util = require('util')
 const mkdirp = require('mkdirp')
-const mime = require('mime-types')
 const {fileDir, filePublicUrl} = require('../config/env')
-const db = require('../services/database')
-const File = require('../models/file')
 
 const readFileAsync = util.promisify(fs.readFile)
 const writeFileAsync = util.promisify(fs.writeFile)
@@ -19,8 +16,8 @@ async function mkdirpAsync(dir) {
 }
 
 class FileIO {
-  constructor(ext = null) {
-    this.id = _generateRandomId()
+  constructor(ext = null, id = _generateRandomId()) {
+    this.id = id
     this.ext = ext
     this.dir1 = this.id.slice(0, 2)
     this.dir2 = this.id.slice(2, 4)
@@ -48,49 +45,20 @@ class FileIO {
     return writeFileAsync(this.filepath, buffer)
   }
 
-  async remove() {
+  async delete() {
     return unlinkAsync(this.filepath)
   }
-}
 
-exports.FileIO = FileIO
-
-class FileIOStorage {
-  _handleFile(req, file, cb) {
-    db.transaction(async trx => {
-      const ext = mime.extension(file.mimetype)
-      const fileIO = new FileIO(ext)
-
-      await File.insertTransaction({
-        userId: req.user.id,
-        name: fileIO.id,
-        ext
-      }, trx)
-
-      await mkdirpAsync(path.dirname(fileIO.filepath))
-      await new Promise((resolve, reject) => {
-        const ostream = fs.createWriteStream(fileIO.filepath)
-        file.stream.pipe(ostream)
-        ostream.on('error', reject)
-        ostream.on('finish', resolve)
-      })
-
-      cb(null, {fileIO})
-    }).catch(cb)
+  async getReadStream() {
+    return fs.createReadStream(this.filepath)
   }
 
-  _removeFile(req, file, cb) {
-    (async () => {
-      const {fileIO} = file
-
-      await fileIO.remove()
-
-      delete file.fileIO
-    })().catch(cb)
+  async getWriteStream() {
+    return fs.createWriteStream(this.filepath)
   }
 }
 
-exports.FileIOStorage = FileIOStorage
+module.exports = FileIO
 
 function _generateRandomId() {
   const dirs = crypto.randomBytes(2).toString('hex')

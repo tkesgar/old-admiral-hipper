@@ -1,5 +1,5 @@
 /* eslint-disable camelcase */
-const {toggle} = require('../../config/env')
+const toggle = require('../../config/toggle')
 
 const TYPE_INTEGER = 'i'
 const TYPE_STRING = 's'

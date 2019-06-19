@@ -10,48 +10,27 @@ class File extends Row {
     return row ? new File(row, conn) : null
   }
 
+  static async findAllByIds(ids, conn = db) {
+    return conn(TABLE).whereIn('id', ids).map(row => new File(row, conn))
+  }
+
   static async findByName(name, conn = db) {
     const [row] = await conn(TABLE).where('name', name)
     return row ? new File(row, conn) : null
   }
 
-  static async insert(data) {
+  static async insert(data, conn = db) {
     const {
       userId,
       name,
       ext
     } = data
 
-    return db.transaction(async trx => {
-      if (await File.findByName(name, trx)) {
-        throw new AppError('Name is not available', 'NAME_NOT_AVAILABLE', {name})
-      }
-
-      const [id] = await trx(TABLE).insert({
-        /* eslint-disable camelcase */
-        user_id: userId,
-        name,
-        ext
-        /* eslint-enable camelcase */
-      })
-
-      return id
-    })
-  }
-
-  // TODO insertTransaction ini bisa di-refactor
-  static async insertTransaction(data, trx) {
-    const {
-      userId,
-      name,
-      ext
-    } = data
-
-    if (await File.findByName(name, trx)) {
+    if (await File.findByName(name, conn)) {
       throw new AppError('Name is not available', 'NAME_NOT_AVAILABLE', {name})
     }
 
-    const [id] = await trx(TABLE).insert({
+    const [id] = await conn(TABLE).insert({
       /* eslint-disable camelcase */
       user_id: userId,
       name,

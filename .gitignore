@@ -76,3 +76,6 @@ typings/
 
 # package-lock.json (use yarn)
 package-lock.json
+
+# Toggle file
+toggle.json

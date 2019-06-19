@@ -1,9 +1,13 @@
 const {Router: router} = require('express')
 const {default: ow} = require('ow')
+const multer = require('multer')
 const Chara = require('../controllers/chara')
 const CharaInfo = require('../controllers/chara-info')
+const CharaImage = require('../controllers/chara-image')
 const handle = require('../lib/handle')
 const checkAuth = require('../middlewares/check-auth')
+
+const upload = multer({storage: multer.memoryStorage()})
 
 const route = router()
 
@@ -118,6 +122,56 @@ route.delete('/chara/:key/info/:infoKey',
   handle(async req => {
     const {charaInfo} = req
     await CharaInfo.delete(charaInfo)
+  })
+)
+
+route.get('/chara/:key/image', handle(async req => {
+  const {chara} = req
+  return CharaImage.findAll(chara)
+}))
+
+route.post('/chara/:key/image',
+  _mustBeCharaOwner(),
+  upload.single('image'),
+  async req => {
+    const {user, chara, file: {buffer}, body: {key}} = req
+    await CharaImage.insert(user, chara, key, buffer)
+  }
+)
+
+route.use('/chara/:key/image/:fileKey', handle(async (req, res) => {
+  const {chara, params: {fileKey: key}} = req
+
+  const charaImage = await CharaImage.find(chara, key)
+  if (!charaImage) {
+    res.sendStatus(404)
+    return
+  }
+
+  req.charaImage = charaImage
+}, true))
+
+route.get('/chara/:key/image/:fileKey', handle(async (req, res) => {
+  const {charaImage} = req
+
+  const url = await CharaImage.get(charaImage)
+  res.redirect(url)
+}))
+
+route.put('/chara/:key/image/:fileKey',
+  _mustBeCharaOwner(),
+  upload.single('image'),
+  handle(async req => {
+    const {charaImage, file: {buffer}} = req
+    await CharaImage.update(charaImage, buffer)
+  })
+)
+
+route.delete('/chara/:key/image/:fileKey',
+  _mustBeCharaOwner(),
+  handle(async req => {
+    const {charaImage} = req
+    await CharaImage.delete(charaImage)
   })
 )
 
