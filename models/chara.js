@@ -23,7 +23,7 @@ class Chara extends Row {
     } = data
 
     return db.transaction(async trx => {
-      if (await Chara.findByName(name)) {
+      if (await Chara.findByName(name, trx)) {
         throw new AppError('Name is not available', 'NAME_NOT_AVAILABLE', {name})
       }
 
@@ -70,7 +70,6 @@ class Chara extends Row {
   getData() {
     return {
       id: this.id,
-      userId: this.userId,
       name: this.name,
       bio: this.bio
     }

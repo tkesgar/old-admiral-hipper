@@ -29,7 +29,7 @@ class CharaInfo extends Row {
     } = data
 
     return db.transaction(async trx => {
-      if (CharaInfo.findByCharaKey(charaId, key)) {
+      if (CharaInfo.findByCharaKey(charaId, key, trx)) {
         throw new AppError('Info for chara already exists', 'INFO_EXIST', {charaId, key})
       }
 
@@ -119,7 +119,6 @@ class CharaInfo extends Row {
 
   getData() {
     return {
-      id: this.id,
       key: this.key,
       value: this.value
     }

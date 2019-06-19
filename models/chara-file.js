@@ -1,0 +1,100 @@
+const Row = require('../lib/knex-utils/row')
+const db = require('../services/database')
+const {AppError} = require('../utils/error')
+
+const TABLE = 'chara_file'
+
+class CharaFile extends Row {
+  static async findById(id, conn = db) {
+    const [row] = await conn(TABLE).where('id', id)
+    return row ? new CharaFile(row, conn) : null
+  }
+
+  static async findByCharaKey(charaId, key, conn = db) {
+    const [row] = await conn(TABLE).where('chara_id', charaId).andWhere('key', key)
+    return row ? new CharaFile(row, conn) : null
+  }
+
+  static async findAllByChara(charaId, conn = db) {
+    return conn(TABLE).where('chara_id', charaId)
+      .map(row => new CharaFile(row, conn))
+  }
+
+  static async insert(data) {
+    const {
+      charaId,
+      key,
+      fileId
+    } = data
+
+    return db.transaction(async trx => {
+      if (CharaFile.findByCharaKey(charaId, key, trx)) {
+        throw new AppError('File for chara already exists', 'FILE_EXIST', {charaId, key})
+      }
+
+      const [id] = await trx(TABLE).insert({
+        /* eslint-disable camelcase */
+        chara_id: charaId,
+        key,
+        file_id: fileId
+        /* eslint-enable camelcase */
+      })
+
+      return id
+    })
+  }
+
+  static async insertMany(entries) {
+    return db.transaction(async trx => {
+      const count = await trx(TABLE)
+        .whereIn(['chara_id', 'key'], entries.map(entry => [entry.charaId, entry.key]))
+        .count()
+
+      if (count > 0) {
+        throw new AppError('File for chara already exists', 'INFO_EXIST')
+      }
+
+      await trx(TABLE).insert(entries.map(entry => {
+        const {
+          charaId,
+          key,
+          fileId
+        } = entry
+
+        return {
+          /* eslint-disable camelcase */
+          chara_id: charaId,
+          key,
+          file_id: fileId
+          /* eslint-enable camelcase */
+        }
+      }))
+    })
+  }
+
+  constructor(row, conn = db) {
+    super(TABLE, row, conn)
+  }
+
+  get charaId() {
+    return this.getColumn('chara_id')
+  }
+
+  get key() {
+    return this.getColumn('key')
+  }
+
+  get fileId() {
+    return this.getColumn('file_id')
+  }
+
+  async setKey(key) {
+    await this.setColumn('key', key)
+  }
+
+  async setFileId(fileId) {
+    await this.setColumn('file_id', fileId)
+  }
+}
+
+module.exports = CharaFile

@@ -23,7 +23,7 @@ class File extends Row {
     } = data
 
     return db.transaction(async trx => {
-      if (await File.findByName(name)) {
+      if (await File.findByName(name, trx)) {
         throw new AppError('Name is not available', 'NAME_NOT_AVAILABLE', {name})
       }
 
@@ -37,6 +37,29 @@ class File extends Row {
 
       return id
     })
+  }
+
+  // TODO insertTransaction ini bisa di-refactor
+  static async insertTransaction(data, trx) {
+    const {
+      userId,
+      name,
+      ext
+    } = data
+
+    if (await File.findByName(name, trx)) {
+      throw new AppError('Name is not available', 'NAME_NOT_AVAILABLE', {name})
+    }
+
+    const [id] = await trx(TABLE).insert({
+      /* eslint-disable camelcase */
+      user_id: userId,
+      name,
+      ext
+      /* eslint-enable camelcase */
+    })
+
+    return id
   }
 
   constructor(row, conn = db) {
@@ -73,22 +96,6 @@ class File extends Row {
 
   async touch() {
     await this.setColumn('updated_time', db.fn.now())
-  }
-
-  getData(scope = null) {
-    switch (scope) {
-      case 'private':
-        return {
-          id: this.id,
-          userId: this.userId,
-          filename: this.filename
-        }
-      default:
-        return {
-          id: this.id,
-          filename: this.filename
-        }
-    }
   }
 }
 

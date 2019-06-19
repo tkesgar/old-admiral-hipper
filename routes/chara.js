@@ -60,7 +60,7 @@ route.delete('/chara/:key/bio', (req, res) => res.sendStatus(501))
 
 route.get('/chara/:key/info', handle(async req => {
   const {chara} = req
-  return CharaInfo.findAll(chara.id)
+  return CharaInfo.findAll(chara)
 }))
 
 route.post('/chara/:key/info',
