@@ -2,10 +2,14 @@ const Chara = require('../models/chara')
 const CharaInfo = require('../models/chara-info')
 const log = require('../services/log')
 const v = require('../utils/validate')
-const db = require('../services/database')
+const {transaction} = require('../services/database')
 
 exports.find = async key => {
   return (await Chara.findById(key)) || (await Chara.findByName(key)) || null
+}
+
+exports.findAllByUser = async user => {
+  return Chara.findAllByUser(user.id)
 }
 
 exports.insert = async (userId, name, bio = null, entries = null) => {
@@ -16,7 +20,7 @@ exports.insert = async (userId, name, bio = null, entries = null) => {
     v.validateCharaInfoEntries(entries)
   }
 
-  await db.transaction(async trx => {
+  await transaction(async trx => {
     const charaId = await Chara.insert({userId, name, bio}, trx)
 
     if (entries) {

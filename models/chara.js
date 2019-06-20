@@ -15,6 +15,10 @@ class Chara extends Row {
     return row ? new Chara(row, conn) : null
   }
 
+  static async findAllByUser(userId, conn = db) {
+    return conn(TABLE).where('user_id', userId).map(row => new Chara(row))
+  }
+
   static async insert(data, conn = db) {
     const {
       userId,

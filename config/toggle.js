@@ -10,7 +10,8 @@ const toggle = {
 const toggleFile = path.resolve('./toggle.json')
 if (fs.existsSync(toggleFile)) {
   Object.assign(toggle, JSON.parse(fs.readFileSync(toggleFile)))
-  log.debug({toggle}, 'Toggle file read')
+} else {
+  log.info('toggle.json does not exist; using default toggle data')
 }
 
 module.exports = toggle
