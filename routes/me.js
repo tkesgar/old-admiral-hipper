@@ -12,7 +12,7 @@ route.use('/me', checkAuth())
 route.get('/me', (req, res) => {
   const {user} = req
 
-  res.json(user.getData('personal'))
+  res.json(user.getData({authData: true}))
 })
 
 route.delete('/me', handle(async req => {

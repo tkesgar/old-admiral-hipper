@@ -120,25 +120,27 @@ class User extends Row {
     return this.getColumn('google_id')
   }
 
-  getData(scope = null) {
-    switch (scope) {
-      case 'personal':
-        return {
-          id: this.id,
-          name: this.name,
-          displayName: this.displayName,
-          hasEmail: this.hasEmail,
-          isEmailVerified: this.isEmailVerified,
-          hasFacebook: Boolean(this.facebookId),
-          hasGoogle: Boolean(this.googleId)
-        }
-      default:
-        return {
-          id: this.id,
-          name: this.name,
-          displayName: this.displayName
-        }
+  getData(opts = {}) {
+    const {
+      authData = false
+    } = opts
+
+    const data = {
+      id: this.id,
+      name: this.name,
+      displayName: this.displayName
     }
+
+    if (authData) {
+      Object.assign(data, {
+        hasEmail: this.hasEmail,
+        isEmailVerified: this.isEmailVerified,
+        hasFacebook: Boolean(this.facebookId),
+        hasGoogle: Boolean(this.googleId)
+      })
+    }
+
+    return data
   }
 
   async setName(name) {

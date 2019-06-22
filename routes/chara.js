@@ -16,7 +16,7 @@ route.get('/chara', (req, res) => res.sendStatus(501))
 
 route.post('/chara',
   checkAuth(),
-  handle(async req => {
+  handle(async (req, res) => {
     const {user, body: {name, bio, entries}} = req
     ow(name, ow.string)
     ow(bio, ow.optional.string)
@@ -25,7 +25,9 @@ route.post('/chara',
       value: ow.any(ow.string, ow.number.integer)
     })))
 
-    await Chara.insert(user.id, name, bio, entries)
+    // TODO Semua endpoint POST harus me-return 201 dengan header Location
+    const charaId = await Chara.insert(user.id, name, bio, entries)
+    res.status(201).send(`/chara/${charaId}`)
   })
 )
 

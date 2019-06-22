@@ -138,7 +138,7 @@ const SET_INFO = {
   }
 }
 
-function isValidCharaInfo({key, value}) {
+function isValidCharaInfo(key, value) {
   if (!/^(x_)?[a-z_]+$/.test(key)) {
     return false
   }
@@ -213,18 +213,37 @@ function isValidCharaInfoEntries(entries, validateEntry = true) {
     }
   }
 
-  for (const {key} of entries) {
-    for (const setInfo of Object.values(SET_INFO)) {
-      const {keys} = setInfo
-      if (keys.includes(key) && keys.find(searchKey => !entries.find(entry => entry.key === searchKey))) {
+  const setInfoCheckList = []
+  for (const setInfo of Object.values(SET_INFO)) {
+    let requireSetInfoCheck = false
+
+    for (const key of setInfo.keys) {
+      if (entries.find(entry => entry.key === key)) {
+        requireSetInfoCheck = true
+        break
+      }
+    }
+
+    if (requireSetInfoCheck) {
+      setInfoCheckList.push(setInfo)
+      break
+    }
+  }
+
+  for (const setInfo of setInfoCheckList) {
+    const {keys: requiredKeys} = setInfo
+
+    for (const requiredKey of requiredKeys) {
+      if (!entries.find(entry => entry.key === requiredKey)) {
         return false
       }
+    }
 
-      const {test} = setInfo
-      if (test) {
-        if (!test(...keys.map(key => entries.find(entry => entry.key === key).value))) {
-          return false
-        }
+    const {test} = setInfo
+    if (test) {
+      const values = requiredKeys.map(testKey => entries.find(entry => entry.key === testKey).value)
+      if (!test(...values)) {
+        return false
       }
     }
   }

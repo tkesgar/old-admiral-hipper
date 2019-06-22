@@ -69,12 +69,21 @@ class Chara extends Row {
     await this.setColumn('bio', bio)
   }
 
-  getData() {
-    return {
+  getData(opts = {}) {
+    const {
+      bio = true
+    } = opts
+
+    const data = {
       id: this.id,
-      name: this.name,
-      bio: this.bio
+      name: this.name
     }
+
+    if (bio) {
+      Object.assign(data, {bio: this.bio})
+    }
+
+    return data
   }
 }
 
