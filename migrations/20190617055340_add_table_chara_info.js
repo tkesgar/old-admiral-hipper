@@ -20,7 +20,7 @@ exports.up = async knex => {
     table.string('key', 64)
       .notNullable()
 
-    table.string('type', 8)
+    table.string('type', 4)
       .notNullable()
 
     table.bigInteger('value_i')

@@ -1,6 +1,5 @@
 const upash = require('upash')
 const moment = require('moment')
-const mailHash = require('../utils/mail-hash')
 const Row = require('../lib/knex-utils/row')
 const db = require('../services/database')
 const generateToken = require('../lib/generate-token')
@@ -9,19 +8,17 @@ const {AppError} = require('../utils/error')
 const TABLE = 'user'
 
 class User extends Row {
+  static getTokenExpireTime(time = new Date(), amount = 1, unit = 'hour') {
+    return moment(time).add(amount, unit).toDate()
+  }
+
   static async findById(id, conn = db) {
     const [row] = await conn(TABLE).where('id', id)
     return row ? new User(row, conn) : null
   }
 
-  static async findByName(name, conn = db) {
-    const [row] = await conn(TABLE).where('name', name)
-    return row ? new User(row, conn) : null
-  }
-
   static async findByEmail(email, conn = db) {
-    const hash = await mailHash(email)
-    const [row] = await conn(TABLE).where('email_hash', hash)
+    const [row] = await conn(TABLE).where('email', email)
     return row ? new User(row, conn) : null
   }
 
@@ -38,7 +35,6 @@ class User extends Row {
   static async insert(data, conn = db) {
     const {
       email,
-      name = null,
       displayName = null,
       password = null,
       isEmailVerified = false,
@@ -46,23 +42,17 @@ class User extends Row {
       googleId = null
     } = data
 
-    if (await User.findByName(name, conn)) {
-      throw new AppError('Name is not available', 'NAME_NOT_AVAILABLE', {name})
-    }
-
     if (await User.findByEmail(email, conn)) {
       throw new AppError('Email is already registered', 'EMAIL_REGISTERED', {email})
     }
 
     const passwordHash = password ? await upash.use('pbkdf2').hash(password) : null
-    const emailHash = await mailHash(email)
 
     const [id] = await conn(TABLE).insert({
       /* eslint-disable camelcase */
-      name,
+      email,
       display_name: displayName,
       password_hash: passwordHash,
-      email_hash: emailHash,
       email_verified: isEmailVerified,
       facebook_id: facebookId,
       google_id: googleId
@@ -76,8 +66,8 @@ class User extends Row {
     super(TABLE, row, conn)
   }
 
-  get name() {
-    return this.getColumn('name') || 'guest'
+  get email() {
+    return this.getColumn('email')
   }
 
   get displayName() {
@@ -88,13 +78,9 @@ class User extends Row {
     return Boolean(this.getColumn('email_verified'))
   }
 
-  get hasEmail() {
-    return Boolean(this.getColumn('email_hash')) && this.isEmailVerified
-  }
-
   get recoverPasswordToken() {
     const time = this.getColumn('recover_password_time')
-    const expireTime = _getExpireTime(time)
+    const expireTime = User.getTokenExpireTime(time)
     if (moment().isAfter(expireTime)) {
       return null
     }
@@ -104,7 +90,7 @@ class User extends Row {
 
   get emailVerifyToken() {
     const time = this.getColumn('email_verify_time')
-    const expireTime = _getExpireTime(time)
+    const expireTime = User.getTokenExpireTime(time)
     if (moment().isAfter(expireTime)) {
       return null
     }
@@ -120,39 +106,16 @@ class User extends Row {
     return this.getColumn('google_id')
   }
 
-  getData(opts = {}) {
-    const {
-      authData = false
-    } = opts
-
+  async setEmail(email, emailVerified = false) {
     const data = {
-      id: this.id,
-      name: this.name,
-      displayName: this.displayName
+      /* eslint-disable camelcase */
+      email,
+      email_verified: emailVerified
+      /* eslint-enable camelcase */
     }
 
-    if (authData) {
-      Object.assign(data, {
-        hasEmail: this.hasEmail,
-        isEmailVerified: this.isEmailVerified,
-        hasFacebook: Boolean(this.facebookId),
-        hasGoogle: Boolean(this.googleId)
-      })
-    }
-
-    return data
-  }
-
-  async setName(name) {
-    try {
-      await this.setColumn('name', name)
-    } catch (error) {
-      if (error.code === 'ER_DUP_ENTRY') {
-        throw new AppError('Name is not available', 'NAME_NOT_AVAILABLE', {name})
-      }
-
-      throw error
-    }
+    await this.query.update(data)
+    Object.assign(this.row, data)
   }
 
   async setDisplayName(displayName) {
@@ -162,20 +125,6 @@ class User extends Row {
   async setPassword(password) {
     const hash = await upash.use('pbkdf2').hash(password)
     await this.setColumn('password_hash', hash)
-  }
-
-  async setEmail(email) {
-    const hash = await mailHash(email)
-
-    const data = {
-      /* eslint-disable camelcase */
-      email_hash: hash,
-      email_verified: false
-      /* eslint-enable camelcase */
-    }
-
-    await this.query.update(data)
-    Object.assign(this.row, data)
   }
 
   async setEmailVerified(isEmailVerified) {
@@ -193,14 +142,6 @@ class User extends Row {
   async testPassword(password) {
     const hash = this.getColumn('password_hash')
     return upash.verify(hash, password)
-  }
-
-  async testEmail(email, checkEmailVerified = true) {
-    if (checkEmailVerified && !this.isEmailVerified) {
-      return false
-    }
-
-    return (await mailHash(email)) === this.getColumn('email_hash')
   }
 
   async generateRecoverPasswordToken(time = new Date()) {
@@ -261,7 +202,3 @@ class User extends Row {
 }
 
 module.exports = User
-
-function _getExpireTime(time = new Date()) {
-  return moment(time).add(1, 'hour').toDate()
-}

@@ -17,10 +17,6 @@ exports.up = async knex => {
       .unsigned()
       .notNullable()
 
-    table.string('name', 32)
-      .notNullable()
-      .unique()
-
     table.string('ext', 8)
       .notNullable()
 

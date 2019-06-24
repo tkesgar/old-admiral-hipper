@@ -71,7 +71,8 @@ class Chara extends Row {
 
   getData(opts = {}) {
     const {
-      bio = true
+      bio = true,
+      userId = true
     } = opts
 
     const data = {
@@ -81,6 +82,10 @@ class Chara extends Row {
 
     if (bio) {
       Object.assign(data, {bio: this.bio})
+    }
+
+    if (userId) {
+      Object.assign(data, {userId: this.userId})
     }
 
     return data

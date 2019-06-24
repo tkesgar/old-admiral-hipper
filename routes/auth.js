@@ -2,11 +2,12 @@ const {Router: router} = require('express')
 const {default: ow} = require('ow')
 const handle = require('../lib/handle')
 const Auth = require('../controllers/auth')
-const {appCallbackUrl} = require('../config/env')
+const {appCallbackURL} = require('../config/env')
 const toggle = require('../config/toggle')
 const {checkRecaptcha} = require('../lib/check-recaptcha')
 const toggleRoute = require('../middlewares/toggle-route')
 const passport = require('../services/passport')
+const User = require('../controllers/user')
 
 const route = router()
 
@@ -17,13 +18,11 @@ route.get('/auth', (req, res) => {
     return
   }
 
-  res.json(user)
+  res.json(User.getAuthInfo(user))
 })
 
 route.post('/auth/login', handle(async (req, res) => {
   const {name, password} = req.body
-  ow(name, ow.string)
-  ow(password, ow.string)
 
   const user = await Auth.authByPassword(name, password)
   if (!user) {
@@ -72,7 +71,7 @@ route.get('/auth/verify-email', handle(async (req, res) => {
 
   await Auth.verifyEmail(name, token)
 
-  res.redirect(`${appCallbackUrl}?info=verify_email_success`)
+  res.redirect(`${appCallbackURL}?info=verify_email_success`)
 }))
 
 route.post('/auth/register',
@@ -93,7 +92,7 @@ route.get('/auth/google', passport.authenticate('google'))
 route.get('/auth/google/_callback',
   passport.authenticate('google'),
   (req, res) => {
-    res.redirect(`${appCallbackUrl}?info=auth`)
+    res.redirect(`${appCallbackURL}?info=auth`)
   }
 )
 

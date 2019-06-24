@@ -3,7 +3,7 @@ const fs = require('fs')
 const path = require('path')
 const util = require('util')
 const mkdirp = require('mkdirp')
-const {fileDir, filePublicUrl} = require('../config/env')
+const {fileDir, filePublicBaseURL} = require('../config/env')
 
 const readFileAsync = util.promisify(fs.readFile)
 const writeFileAsync = util.promisify(fs.writeFile)
@@ -16,24 +16,43 @@ async function mkdirpAsync(dir) {
 }
 
 class FileIO {
-  constructor(ext = null, id = _generateRandomId()) {
-    this.id = id
+  static generateName() {
+    const dirs = crypto.randomBytes(2).toString('hex')
+    const rand = crypto.randomBytes(14).toString('hex')
+    const ts = Date.now().toString(16)
+
+    return [dirs, ts, rand].join('').slice(0, 32)
+  }
+
+  constructor(opts = {}) {
+    const {
+      ext = null,
+      name = FileIO.generateName(),
+      dir1 = name.slice(0, 2),
+      dir2 = name.slice(2, 4)
+    } = opts
+
+    this.name = name
     this.ext = ext
-    this.dir1 = this.id.slice(0, 2)
-    this.dir2 = this.id.slice(2, 4)
+    this.dir1 = dir1
+    this.dir2 = dir2
   }
 
   get filename() {
-    const {id, ext} = this
+    const {name: id, ext} = this
     return ext ? `${id}.${ext}` : id
   }
 
+  get dirs() {
+    return [this.dir1, this.dir2]
+  }
+
   get publicURL() {
-    return path.posix.join(filePublicUrl, this.dir1, this.dir2, this.filename)
+    return path.posix.join(filePublicBaseURL, this.dir, this.dir2, this.filename)
   }
 
   get filepath() {
-    return path.join(fileDir, this.dir1, this.dir2, this.filename)
+    return path.join(fileDir, this.dir, this.dir2, this.filename)
   }
 
   async read() {
@@ -59,11 +78,3 @@ class FileIO {
 }
 
 module.exports = FileIO
-
-function _generateRandomId() {
-  const dirs = crypto.randomBytes(2).toString('hex')
-  const rand = crypto.randomBytes(14).toString('hex')
-  const ts = Date.now().toString(16)
-
-  return [dirs, ts, rand].join('').slice(0, 32)
-}

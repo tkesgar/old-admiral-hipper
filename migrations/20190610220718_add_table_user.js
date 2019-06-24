@@ -13,9 +13,8 @@ exports.up = async knex => {
       .notNullable()
       .defaultTo(knex.raw('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
 
-    table.string('name', 16)
-      .nullable()
-      .defaultTo(null)
+    table.string('email', 128)
+      .notNullable()
       .unique()
 
     table.string('display_name', 32)
@@ -25,10 +24,6 @@ exports.up = async knex => {
     table.string('password_hash', 256)
       .nullable()
       .defaultTo(null)
-
-    table.string('email_hash', 256)
-      .notNullable()
-      .unique()
 
     table.boolean('email_verified')
       .notNullable()

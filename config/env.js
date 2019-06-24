@@ -15,14 +15,14 @@ exports.test = test
 const production = env === 'production'
 exports.production = production
 
-const baseUrl = process.env.BASE_URL || `http://localhost:${process.env.PORT}`
-exports.baseurl = baseUrl
+const baseURL = process.env.BASE_URL || `http://localhost:${process.env.PORT}`
+exports.baseurl = baseURL
 
-const appCallbackUrl = `${process.env.APP_BASE_URL}/_callback`
-exports.appCallbackUrl = appCallbackUrl
+const appCallbackURL = `${process.env.APP_BASE_URL}/_callback`
+exports.appCallbackURL = appCallbackURL
 
 const fileDir = path.resolve(process.env.FILE_DIR)
 exports.fileDir = fileDir
 
-const filePublicUrl = process.env.FILE_PUBLIC_BASE_URL || `${baseUrl}/files`
-exports.filePublicUrl = filePublicUrl
+const filePublicBaseURL = process.env.FILE_PUBLIC_BASE_URL || `${baseURL}/files`
+exports.filePublicBaseURL = filePublicBaseURL
