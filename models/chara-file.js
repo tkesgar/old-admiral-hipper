@@ -1,23 +1,29 @@
 const Row = require('../lib/knex-utils/row')
 const db = require('../services/database')
-const {AppError} = require('../utils/error')
 
 const TABLE = 'chara_file'
 
 class CharaFile extends Row {
+  static async findAll(where, conn = db) {
+    return Row.findAll(TABLE, where, row => new CharaFile(row, conn), conn)
+  }
+
+  static async find(where, conn = db) {
+    return Row.find(TABLE, where, row => new CharaFile(row, conn), conn)
+  }
+
   static async findById(id, conn = db) {
-    const [row] = await conn(TABLE).where('id', id)
-    return row ? new CharaFile(row, conn) : null
+    return CharaFile.find({id}, conn)
   }
 
   static async findByCharaKey(charaId, key, conn = db) {
-    const [row] = await conn(TABLE).where('chara_id', charaId).andWhere('key', key)
-    return row ? new CharaFile(row, conn) : null
+    // eslint-disable-next-line camelcase
+    return CharaFile.find({chara_id: charaId, key}, conn)
   }
 
   static async findAllByChara(charaId, conn = db) {
-    return conn(TABLE).where('chara_id', charaId)
-      .map(row => new CharaFile(row, conn))
+    // eslint-disable-next-line camelcase
+    return CharaFile.findAll({chara_id: charaId}, conn)
   }
 
   static async insert(data, conn = db) {
@@ -26,10 +32,6 @@ class CharaFile extends Row {
       key,
       fileId
     } = data
-
-    if (CharaFile.findByCharaKey(charaId, key, conn)) {
-      throw new AppError('File for chara already exists', 'FILE_EXIST', {charaId, key})
-    }
 
     const [id] = await conn(TABLE).insert({
       /* eslint-disable camelcase */
@@ -42,21 +44,13 @@ class CharaFile extends Row {
     return id
   }
 
-  static async insertMany(entries, conn = db) {
-    const count = await conn(TABLE)
-      .whereIn(['chara_id', 'key'], entries.map(entry => [entry.charaId, entry.key]))
-      .count()
-
-    if (count > 0) {
-      throw new AppError('File for chara already exists', 'INFO_EXIST')
-    }
-
-    await conn(TABLE).insert(entries.map(entry => {
+  static async insertMany(manyData, conn = db) {
+    await conn(TABLE).insert(manyData.map(data => {
       const {
         charaId,
         key,
         fileId
-      } = entry
+      } = data
 
       return {
         /* eslint-disable camelcase */
@@ -82,6 +76,10 @@ class CharaFile extends Row {
 
   get fileId() {
     return this.getColumn('file_id')
+  }
+
+  async setCharaId(charaId) {
+    await this.setColumn('chara_id', charaId)
   }
 
   async setKey(key) {

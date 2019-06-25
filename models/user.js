@@ -2,8 +2,7 @@ const upash = require('upash')
 const moment = require('moment')
 const Row = require('../lib/knex-utils/row')
 const db = require('../services/database')
-const generateToken = require('../lib/generate-token')
-const {AppError} = require('../utils/error')
+const generateToken = require('../lib/token')
 
 const TABLE = 'user'
 
@@ -12,24 +11,30 @@ class User extends Row {
     return moment(time).add(amount, unit).toDate()
   }
 
+  static async findAll(where, conn = db) {
+    return Row.findAll(TABLE, where, row => new User(row, conn), conn)
+  }
+
+  static async find(where, conn = db) {
+    return Row.find(TABLE, where, row => new User(row, conn), conn)
+  }
+
   static async findById(id, conn = db) {
-    const [row] = await conn(TABLE).where('id', id)
-    return row ? new User(row, conn) : null
+    return User.find({id}, conn)
   }
 
   static async findByEmail(email, conn = db) {
-    const [row] = await conn(TABLE).where('email', email)
-    return row ? new User(row, conn) : null
+    return User.find({email}, conn)
   }
 
   static async findByFacebookId(facebookId, conn = db) {
-    const [row] = await conn(TABLE).where('facebook_id', facebookId)
-    return row ? new User(row, conn) : null
+    // eslint-disable-next-line camelcase
+    return User.find({facebook_id: facebookId}, conn)
   }
 
   static async findByGoogleId(googleId, conn = db) {
-    const [row] = await conn(TABLE).where('google_id', googleId)
-    return row ? new User(row, conn) : null
+    // eslint-disable-next-line camelcase
+    return User.find({google_id: googleId}, conn)
   }
 
   static async insert(data, conn = db) {
@@ -42,9 +47,7 @@ class User extends Row {
       googleId = null
     } = data
 
-    if (await User.findByEmail(email, conn)) {
-      throw new AppError('Email is already registered', 'EMAIL_REGISTERED', {email})
-    }
+    // TODO Handle error kalau email user sudah teregistrasi
 
     const passwordHash = password ? await upash.use('pbkdf2').hash(password) : null
 
@@ -71,7 +74,13 @@ class User extends Row {
   }
 
   get displayName() {
-    return this.getColumn('display_name') || this.name
+    const displayName = this.getColumn('display_name')
+    if (displayName) {
+      return displayName
+    }
+
+    const nameFromEmail = this.email.split('@').shift().slice(0, 32)
+    return nameFromEmail
   }
 
   get isEmailVerified() {

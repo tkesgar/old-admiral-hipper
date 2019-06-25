@@ -1,76 +1,92 @@
 const Row = require('../lib/knex-utils/row')
 const db = require('../services/database')
-const {AppError} = require('../utils/error')
 
 const TABLE = 'chara_info'
+const TYPE_INTEGER = 'i'
+const TYPE_STRING = 's'
+
+function getType(value) {
+  if (Number.isInteger(value)) {
+    return TYPE_INTEGER
+  }
+
+  if (typeof value === 'string') {
+    return TYPE_STRING
+  }
+
+  throw new Error(`Unknown type for value: ${value}`)
+}
+
+function getValueColumns(value) {
+  const type = getType(value)
+
+  return {
+    /* eslint-disable camelcase */
+    type,
+    value_i: type === TYPE_INTEGER ? value : null,
+    value_s: type === TYPE_STRING ? value : null
+    /* eslint-enable camelcase */
+  }
+}
 
 class CharaInfo extends Row {
+  static async findAll(where, conn = db) {
+    return Row.findAll(TABLE, where, row => new CharaInfo(row, conn), conn)
+  }
+
+  static async find(where, conn = db) {
+    return Row.find(TABLE, where, row => new CharaInfo(row, conn), conn)
+  }
+
   static async findById(id, conn = db) {
-    const [row] = await conn(TABLE).where('id', id)
-    return row ? new CharaInfo(row, conn) : null
+    return CharaInfo.find({id}, conn)
   }
 
   static async findByCharaKey(charaId, key, conn = db) {
-    const [row] = await conn(TABLE).where('chara_id', charaId).andWhere('key', key)
-    return row ? new CharaInfo(row, conn) : null
+    // eslint-disable-next-line camelcase
+    return CharaInfo.find({chara_id: charaId, key}, conn)
   }
 
   static async findAllByChara(charaId, conn = db) {
-    return conn(TABLE).where('chara_id', charaId)
-      .map(row => new CharaInfo(row, conn))
+    // eslint-disable-next-line camelcase
+    return CharaInfo.findAll({chara_id: charaId}, conn)
   }
 
   static async insert(data, conn = db) {
     const {
       charaId,
       key,
-      value,
-      type: insertType = null
+      value
     } = data
 
-    if (CharaInfo.findByCharaKey(charaId, key, conn)) {
-      throw new AppError('Info for chara already exists', 'INFO_EXIST', {charaId, key})
-    }
-
-    const type = _getType(insertType, value)
+    // TODO Handle error kalau chara info sudah ada
 
     const [id] = await conn(TABLE).insert({
       /* eslint-disable camelcase */
       chara_id: charaId,
       key,
-      type,
-      ..._getColumnValues(type, value)
+      ...getValueColumns(value)
       /* eslint-enable camelcase */
     })
 
     return id
   }
 
-  static async insertMany(entries, conn = db) {
-    const count = await conn(TABLE)
-      .whereIn(['chara_id', 'key'], entries.map(entry => [entry.charaId, entry.key]))
-      .count()
+  static async insertMany(manyData, conn = db) {
+    // TODO Handle error kalau ada chara info yang sudah ada
 
-    if (count > 0) {
-      throw new AppError('Info for chara already exists', 'INFO_EXIST')
-    }
-
-    await conn(TABLE).insert(entries.map(entry => {
+    await conn(TABLE).insert(manyData.map(data => {
       const {
         charaId,
         key,
-        value,
-        type: insertType = null
-      } = entry
-
-      const type = _getType(insertType, value)
+        value
+      } = data
 
       return {
         /* eslint-disable camelcase */
         chara_id: charaId,
         key,
-        type,
-        ..._getColumnValues(type, value)
+        ...getValueColumns(value)
         /* eslint-enable camelcase */
       }
     }))
@@ -104,50 +120,12 @@ class CharaInfo extends Row {
     await this.setColumn('key', key)
   }
 
-  async setValue(value, insertType = null) {
-    const type = _getType(insertType, value)
-
-    const data = {type, ..._getColumnValues(type, value)}
+  async setValue(value) {
+    const data = getValueColumns(value)
 
     await this.query.update(data)
     Object.assign(this.row, data)
   }
-
-  getData() {
-    return {
-      key: this.key,
-      value: this.value
-    }
-  }
 }
 
 module.exports = CharaInfo
-
-function _getType(type, value) {
-  if (!type) {
-    if (Number.isInteger(value)) {
-      return 'i'
-    }
-
-    if (typeof value === 'string') {
-      return 's'
-    }
-  }
-
-  switch (type) {
-    case 'i':
-    case 's':
-      return type
-    default:
-      throw new Error(`Unknown chara info type: ${type}`)
-  }
-}
-
-function _getColumnValues(type, value) {
-  return {
-    /* eslint-disable camelcase */
-    value_i: type === 'i' ? value : null,
-    value_s: type === 's' ? value : null
-    /* eslint-enable camelcase */
-  }
-}

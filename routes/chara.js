@@ -1,11 +1,12 @@
 const {Router: router} = require('express')
-const {default: ow} = require('ow')
 const multer = require('multer')
-const Chara = require('../controllers/chara')
-const CharaInfo = require('../controllers/chara-info')
-const CharaImage = require('../controllers/chara-image')
+const CharaController = require('../controllers/chara')
 const handle = require('../lib/handle')
 const checkAuth = require('../middlewares/check-auth')
+
+function checkCharaOwner() {
+  return checkAuth((user, req) => req.chara.userId === req.user.id)
+}
 
 const upload = multer({storage: multer.memoryStorage()})
 
@@ -16,25 +17,18 @@ route.get('/chara', (req, res) => res.sendStatus(501))
 
 route.post('/chara',
   checkAuth(),
-  handle(async (req, res) => {
-    const {user, body: {name, bio, entries}} = req
-    ow(name, ow.string)
-    ow(bio, ow.optional.string)
-    ow(entries, ow.optional.array.ofType(ow.object.exactShape({
-      key: ow.string,
-      value: ow.any(ow.string, ow.number.integer)
-    })))
+  handle(async req => {
+    const {user, body: {name, bio, info}} = req
 
     // TODO Semua endpoint POST harus me-return 201 dengan header Location
-    const charaId = await Chara.insert(user.id, name, bio, entries)
-    res.status(201).send(`/chara/${charaId}`)
+    await CharaController.insert(user, name, bio, info)
   })
 )
 
-route.use('/chara/:key', handle(async (req, res) => {
-  const {key} = req.params
+route.use('/chara/:charaId', handle(async (req, res) => {
+  const {params: {charaId}} = req
 
-  const chara = await Chara.find(key)
+  const chara = await CharaController.findById(charaId)
   if (!chara) {
     res.sendStatus(404)
     return
@@ -43,59 +37,61 @@ route.use('/chara/:key', handle(async (req, res) => {
   req.chara = chara
 }, true))
 
-route.get('/chara/:key', (req, res) => {
-  res.json(req.chara)
+route.get('/chara/:charaId', (req, res) => {
+  const {chara} = req
+
+  res.json(CharaController.getCharaData(chara))
 })
 
-route.delete('/chara/:key',
-  _mustBeCharaOwner(),
+route.delete('/chara/:charaId',
+  checkCharaOwner(),
   handle(async req => {
     const {chara} = req
-    await Chara.delete(chara)
+
+    await CharaController.delete(chara)
   })
 )
 
 // TODO Implementasi update name
-route.put('/chara/:key/name', (req, res) => res.sendStatus(501))
+route.put('/chara/:charaId/name', (req, res) => res.sendStatus(501))
 
 // TODO Implementasi update bio
-route.put('/chara/:key/bio', (req, res) => res.sendStatus(501))
+route.put('/chara/:charaId/bio', (req, res) => res.sendStatus(501))
 
 // TODO Implementasi delete bio
-route.delete('/chara/:key/bio', (req, res) => res.sendStatus(501))
+route.delete('/chara/:charaId/bio', (req, res) => res.sendStatus(501))
 
-route.get('/chara/:key/info', handle(async req => {
+route.get('/chara/:charaId/info', handle(async req => {
   const {chara} = req
-  return CharaInfo.findAll(chara)
+
+  return CharaController.findAllCharaInfo(chara)
 }))
 
-route.post('/chara/:key/info',
-  _mustBeCharaOwner(),
+route.post('/chara/:charaId/info',
+  checkCharaOwner(),
   handle(async req => {
     const {chara, body: {key, value}} = req
-    ow(key, ow.string)
-    ow(value, ow.any(ow.string, ow.number.integer))
 
-    await CharaInfo.insert(chara, key, value)
+    await CharaController.insertInfo(chara, key, value)
   })
 )
 
-route.put('/chara/:key/info',
-  _mustBeCharaOwner(),
-  // TODO Implementasi update banyak chara info
+route.put('/chara/:charaId/info',
+  checkCharaOwner(),
+  // TODO Implementasi replace banyak chara info
   (req, res) => res.sendStatus(501)
 )
 
-route.delete('/chara/:key/info',
-  _mustBeCharaOwner(),
+route.delete('/chara/:charaId/info',
+  checkCharaOwner(),
   // TODO Implementasi delete semua chara info
   (req, res) => res.sendStatus(501)
 )
 
-route.use('/chara/:key/info/:infoKey', handle(async (req, res) => {
-  const {chara, params: {infoKey: key}} = req
+route.use('/chara/:charaId/info/:infoKey', handle(async (req, res) => {
+  const {chara, params: {infoKey}} = req
 
-  const charaInfo = await Chara.findInfo(chara, key)
+  const charaInfo = await CharaController.findInfo(chara, infoKey)
   if (!charaInfo) {
     res.sendStatus(404)
     return
@@ -104,47 +100,50 @@ route.use('/chara/:key/info/:infoKey', handle(async (req, res) => {
   req.charaInfo = charaInfo
 }, true))
 
-route.get('/chara/:key/info/:infoKey', (req, res) => {
+route.get('/chara/:charaId/info/:infoKey', (req, res) => {
   const {charaInfo} = req
-  res.json(charaInfo)
+
+  res.json(CharaController.getCharaInfoData(charaInfo))
 })
 
-route.put('/chara/:key/info/:infoKey',
-  _mustBeCharaOwner(),
+route.put('/chara/:charaId/info/:infoKey',
+  checkCharaOwner(),
   handle(async req => {
     const {charaInfo, body: {value}} = req
-    ow(value, ow.any(ow.string, ow.number.integer))
 
-    await CharaInfo.update(charaInfo, value)
+    await CharaController.updateInfo(charaInfo, value)
   })
 )
 
-route.delete('/chara/:key/info/:infoKey',
-  _mustBeCharaOwner(),
+route.delete('/chara/:charaId/info/:infoKey',
+  checkCharaOwner(),
   handle(async req => {
     const {charaInfo} = req
-    await CharaInfo.delete(charaInfo)
+
+    await CharaController.deleteInfo(charaInfo)
   })
 )
 
-route.get('/chara/:key/image', handle(async req => {
+route.get('/chara/:charaId/image', handle(async req => {
   const {chara} = req
-  return CharaImage.findAll(chara)
+
+  return CharaController.findAllCharaImage(chara)
 }))
 
-route.post('/chara/:key/image',
-  _mustBeCharaOwner(),
+route.post('/chara/:charaId/image',
+  checkCharaOwner(),
   upload.single('image'),
   async req => {
-    const {user, chara, file: {buffer}, body: {key}} = req
-    await CharaImage.insert(user, chara, key, buffer)
+    const {chara, file: {buffer}, body: {key}} = req
+
+    await CharaController.insertImage(chara, key, buffer)
   }
 )
 
-route.use('/chara/:key/image/:fileKey', handle(async (req, res) => {
-  const {chara, params: {fileKey: key}} = req
+route.use('/chara/:charaId/image/:imageKey', handle(async (req, res) => {
+  const {chara, params: {imageKey}} = req
 
-  const charaImage = await CharaImage.find(chara, key)
+  const charaImage = await CharaController.findImage(chara, imageKey)
   if (!charaImage) {
     res.sendStatus(404)
     return
@@ -153,32 +152,35 @@ route.use('/chara/:key/image/:fileKey', handle(async (req, res) => {
   req.charaImage = charaImage
 }, true))
 
-route.get('/chara/:key/image/:fileKey', handle(async (req, res) => {
+route.get('/chara/:charaId/image/:imageKey', (req, res) => {
   const {charaImage} = req
 
-  const url = await CharaImage.get(charaImage)
-  res.redirect(url)
-}))
+  res.json(CharaController.getImageData(charaImage))
+})
 
-route.put('/chara/:key/image/:fileKey',
-  _mustBeCharaOwner(),
+route.get('/chara/:charaId/image/:imageKey/url', (req, res) => {
+  const {charaImage} = req
+
+  res.redirect(CharaController.getImageURL(charaImage))
+})
+
+route.put('/chara/:charaId/image/:fileKey',
+  checkCharaOwner(),
   upload.single('image'),
   handle(async req => {
     const {charaImage, file: {buffer}} = req
-    await CharaImage.update(charaImage, buffer)
+
+    await CharaController.updateImage(charaImage, buffer)
   })
 )
 
-route.delete('/chara/:key/image/:fileKey',
-  _mustBeCharaOwner(),
+route.delete('/chara/:charaId/image/:fileKey',
+  checkCharaOwner(),
   handle(async req => {
     const {charaImage} = req
-    await CharaImage.delete(charaImage)
+
+    await CharaController.deleteImage(charaImage)
   })
 )
 
 module.exports = route
-
-function _mustBeCharaOwner() {
-  return checkAuth((user, req) => req.chara.userId === req.user.id)
-}

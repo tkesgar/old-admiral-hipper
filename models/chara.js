@@ -1,22 +1,28 @@
 const Row = require('../lib/knex-utils/row')
 const db = require('../services/database')
-const {AppError} = require('../utils/error')
 
 const TABLE = 'chara'
 
 class Chara extends Row {
+  static async findAll(where, conn = db) {
+    return Row.findAll(TABLE, where, row => new Chara(row, conn), conn)
+  }
+
+  static async find(where, conn = db) {
+    return Row.find(TABLE, where, row => new Chara(row, conn), conn)
+  }
+
   static async findById(id, conn = db) {
-    const [row] = await conn(TABLE).where('id', id)
-    return row ? new Chara(row, conn) : null
+    return Chara.find({id}, conn)
   }
 
   static async findByName(name, conn = db) {
-    const [row] = await conn(TABLE).where('name', name)
-    return row ? new Chara(row, conn) : null
+    return Chara.find({name}, conn)
   }
 
   static async findAllByUser(userId, conn = db) {
-    return conn(TABLE).where('user_id', userId).map(row => new Chara(row))
+    // eslint-disable-next-line camelcase
+    return Chara.findAll({user_id: userId}, conn)
   }
 
   static async insert(data, conn = db) {
@@ -26,9 +32,7 @@ class Chara extends Row {
       bio = null
     } = data
 
-    if (await Chara.findByName(name, conn)) {
-      throw new AppError('Name is not available', 'NAME_NOT_AVAILABLE', {name})
-    }
+    // TODO Handle error kalau nama chara sudah dipakai
 
     const [id] = await conn(TABLE).insert({
       /* eslint-disable camelcase */
@@ -67,28 +71,6 @@ class Chara extends Row {
 
   async setBio(bio) {
     await this.setColumn('bio', bio)
-  }
-
-  getData(opts = {}) {
-    const {
-      bio = true,
-      userId = true
-    } = opts
-
-    const data = {
-      id: this.id,
-      name: this.name
-    }
-
-    if (bio) {
-      Object.assign(data, {bio: this.bio})
-    }
-
-    if (userId) {
-      Object.assign(data, {userId: this.userId})
-    }
-
-    return data
   }
 }
 

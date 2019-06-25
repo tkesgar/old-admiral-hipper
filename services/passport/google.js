@@ -22,10 +22,10 @@ module.exports = new Strategy(
 
       const userInfo = profile._json
       const newUser = await User.insert({
-        googleId: userInfo.sub,
-        displayName: userInfo.name,
         email: userInfo.email,
-        isEmailVerified: userInfo.email_verified
+        displayName: userInfo.name,
+        isEmailVerified: userInfo.email_verified,
+        googleId: userInfo.sub
       })
 
       log.debug({info: userInfo, user: newUser}, 'Created a new user from Google authentication')

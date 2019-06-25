@@ -29,7 +29,7 @@ exports.up = async knex => {
       .notNullable()
       .defaultTo(false)
 
-    table.string('recover_password_token', 40)
+    table.string('recover_password_token', 32)
       .nullable()
       .defaultTo(null)
 
@@ -37,7 +37,7 @@ exports.up = async knex => {
       .nullable()
       .defaultTo(null)
 
-    table.string('email_verify_token', 40)
+    table.string('email_verify_token', 32)
       .nullable()
       .defaultTo(null)
 
