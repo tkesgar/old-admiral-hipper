@@ -1,22 +1,7 @@
 function handleByValue(value) {
   return (req, res) => {
-    if (req.method === 'POST') {
-      if (typeof value !== 'string') {
-        throw new TypeError('POST must return a location URL string')
-      }
-
-      res.status(201)
-        .location(value)
-        .type('application/octet-stream').send(value)
-      return
-    }
-
     if (typeof value === 'undefined') {
-      if (![204, 205].includes(res.statusCode)) {
-        res.status(204)
-      }
-
-      res.end()
+      res.sendStatus(204)
       return
     }
 

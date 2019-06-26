@@ -2,7 +2,7 @@ const {Router: router} = require('express')
 const CharaController = require('../controllers/chara')
 const UserController = require('../controllers/user')
 const checkAuth = require('../middlewares/check-auth')
-const handle = require('../lib/handle')
+const handle = require('../middlewares/handle')
 
 const route = router()
 
@@ -40,9 +40,15 @@ route.delete('/me/display-name', handle(async req => {
 }))
 
 route.put('/me/password', handle(async req => {
-  const {user, body: {password}} = req
+  const {user, body: {password, newPassword}} = req
 
-  await UserController.setPassword(user, password)
+  await UserController.setPassword(user, password, newPassword)
+}))
+
+route.post('/me/verify-email', handle(async req => {
+  const {user} = req
+
+  await UserController.sendVerifyEmailToken(user)
 }))
 
 route.get('/me/chara', handle(async req => {

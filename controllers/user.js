@@ -4,15 +4,22 @@ const {sendMailFromTemplate} = require('../services/mail')
 const User = require('../models/user')
 const {purify} = require('../services/purify')
 const db = require('../services/database')
+const {appBaseURL, baseURL} = require('../config/env')
 
-function getResetPasswordURL(name, token) {
-  return `${process.env.APP_BASE_URL}/recover-password?user=${name}&token=${token}`
+function getResetPasswordURL(token) {
+  return `${appBaseURL}/auth/reset-password?token=${token}`
+}
+
+function getVerifyEmailURL(token) {
+  return `${baseURL}/auth/verify-email?token=${token}&app`
 }
 
 exports.getUserData = user => {
   return {
+    id: user.id,
     email: user.email,
     displayName: user.displayName,
+    hasPassword: user.hasPassword,
     isEmailVerified: user.isEmailVerified,
     hasFacebook: Boolean(user.facebookId),
     hasGoogle: Boolean(user.googleId)
@@ -39,10 +46,21 @@ exports.deleteDisplayName = async user => {
   await user.setDisplayName(null)
 }
 
-exports.setPassword = async (user, password) => {
-  await purify(password, 'password')
+exports.setPassword = async (user, password, newPassword) => {
+  if (user.hasPassword) {
+    if (password === newPassword) {
+      throw new AppError('Same password', 'SAME_PASSWORD')
+    }
 
-  await user.setPassword(password)
+    const match = await user.testPassword(password)
+    if (!match) {
+      throw new AppError('Invalid password', 'INVALID_PASSWORD')
+    }
+  }
+
+  await purify(newPassword, 'password')
+
+  await user.setPassword(newPassword)
 }
 
 exports.getAuthData = user => {
@@ -63,38 +81,50 @@ exports.authenticate = async (email, password) => {
 
 exports.sendResetPasswordToken = async email => {
   const user = await User.findByEmail(email)
-  if (!user) {
+  if (!user || !user.isEmailVerified) {
     throw new AppError('User does not exist', 'NO_USER')
+  }
+
+  if (user.recoverPasswordToken) {
+    throw new AppError('Token already exists', 'TOKEN_EXIST')
   }
 
   const token = await user.generateRecoverPasswordToken()
 
   const info = await sendMailFromTemplate(email, 'forgot-password', {
     title: 'Account password recovery',
-    user: {
-      name: user.name,
-      displayName: user.displayName
-    },
+    displayName: user.displayName,
     link: getResetPasswordURL(token)
   })
 
-  log.debug({info}, 'Email sent')
+  log.debug({info}, 'Reset password email sent')
+}
+
+exports.sendVerifyEmailToken = async user => {
+  if (user.isEmailVerified) {
+    throw new AppError('Email has been verified', 'EMAIL_VERIFIED')
+  }
+
+  if (user.verifyEmailToken) {
+    throw new AppError('Token already exists', 'TOKEN_EXIST')
+  }
+
+  const token = await user.generateEmailVerifyToken()
+
+  const info = await sendMailFromTemplate(user.email, 'verify-email', {
+    title: 'Verify email',
+    displayName: user.displayName,
+    link: getVerifyEmailURL(token)
+  })
+
+  log.debug({info}, 'Reset password email sent')
 }
 
 exports.resetPassword = async (token, newPassword) => {
   await db.transaction(async trx => {
     // eslint-disable-next-line camelcase
-    const user = await User.findByEmail({reset_password_token: token}, trx)
+    const user = await User.find({reset_password_token: token}, trx)
     if (!user) {
-      throw new AppError('User does not exist', 'NO_USER')
-    }
-
-    const userToken = user.recoverPasswordToken
-    if (!userToken) {
-      throw new AppError('Token does not exist or has expired', 'NO_TOKEN')
-    }
-
-    if (token !== userToken) {
       throw new AppError('Invalid token', 'INVALID_TOKEN')
     }
 

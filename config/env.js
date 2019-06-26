@@ -16,9 +16,12 @@ const production = env === 'production'
 exports.production = production
 
 const baseURL = process.env.BASE_URL || `http://localhost:${process.env.PORT}`
-exports.baseurl = baseURL
+exports.baseURL = baseURL
 
-const appCallbackURL = `${process.env.APP_BASE_URL}/_callback`
+const appBaseURL = process.env.APP_BASE_URL
+exports.appBaseURL = appBaseURL
+
+const appCallbackURL = `${appBaseURL}/_callback`
 exports.appCallbackURL = appCallbackURL
 
 const fileDir = path.resolve(process.env.FILE_DIR)

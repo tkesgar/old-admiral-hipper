@@ -29,17 +29,19 @@ exports.up = async knex => {
       .notNullable()
       .defaultTo(false)
 
-    table.string('recover_password_token', 32)
+    table.string('reset_password_token', 32)
       .nullable()
       .defaultTo(null)
+      .unique()
 
-    table.timestamp('recover_password_time')
+    table.timestamp('reset_password_time')
       .nullable()
       .defaultTo(null)
 
     table.string('email_verify_token', 32)
       .nullable()
       .defaultTo(null)
+      .unique()
 
     table.timestamp('email_verify_time')
       .nullable()

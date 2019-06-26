@@ -1,6 +1,6 @@
 const {Router: router} = require('express')
 const UserController = require('../controllers/user')
-const handle = require('../lib/handle')
+const handle = require('../middlewares/handle')
 const passport = require('../services/passport')
 const toggle = require('../config/toggle')
 const toggleRoute = require('../middlewares/toggle-route')
@@ -35,11 +35,14 @@ route.post('/auth/login', handle(async (req, res) => {
 
 route.get('/auth/logout', handle(req => req.logout()))
 
-route.post('/auth/recover', handle(async req => {
-  const {body: {email}} = req
+route.post('/auth/recover',
+  checkRecaptcha(),
+  handle(async req => {
+    const {body: {email}} = req
 
-  await UserController.sendResetPasswordToken(email)
-}))
+    await UserController.sendResetPasswordToken(email)
+  })
+)
 
 route.post('/auth/reset-password', handle(async req => {
   const {body: {token, password}} = req

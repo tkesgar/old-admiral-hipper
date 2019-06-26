@@ -83,18 +83,22 @@ class User extends Row {
     return nameFromEmail
   }
 
+  get hasPassword() {
+    return Boolean(this.getColumn('password_hash'))
+  }
+
   get isEmailVerified() {
     return Boolean(this.getColumn('email_verified'))
   }
 
   get recoverPasswordToken() {
-    const time = this.getColumn('recover_password_time')
+    const time = this.getColumn('reset_password_time')
     const expireTime = User.getTokenExpireTime(time)
     if (moment().isAfter(expireTime)) {
       return null
     }
 
-    return this.getColumn('recover_password_token')
+    return this.getColumn('reset_password_token')
   }
 
   get emailVerifyToken() {
@@ -158,8 +162,8 @@ class User extends Row {
 
     const data = {
       /* eslint-disable camelcase */
-      recover_password_token: token,
-      recover_password_time: time
+      reset_password_token: token,
+      reset_password_time: time
       /* eslint-enable camelcase */
     }
 
@@ -188,8 +192,8 @@ class User extends Row {
   async clearRecoverPasswordToken() {
     const data = {
       /* eslint-disable camelcase */
-      recover_password_token: null,
-      recover_password_time: null
+      reset_password_token: null,
+      reset_password_time: null
       /* eslint-enable camelcase */
     }
 

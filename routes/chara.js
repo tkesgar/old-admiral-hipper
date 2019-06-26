@@ -2,7 +2,7 @@ const multer = require('multer')
 const {Router: router} = require('express')
 const CharaController = require('../controllers/chara')
 const checkAuth = require('../middlewares/check-auth')
-const handle = require('../lib/handle')
+const handle = require('../middlewares/handle')
 
 function checkCharaOwner() {
   return checkAuth((user, req) => req.chara.userId === req.user.id)
