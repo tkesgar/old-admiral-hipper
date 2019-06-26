@@ -12,21 +12,21 @@ const sanitizers = requireAll('./services/sanitizers')
     return sanitizers
   }, {})
 
-async function validate(type, value, opts = {}) {
+async function validate(value, type, opts = {}) {
   const {fn, defaultOpts} = validators[type]
   await fn(value, {...defaultOpts, ...opts})
 }
 
 exports.validate = validate
 
-async function sanitize(type, value, opts = {}) {
+async function sanitize(value, type, opts = {}) {
   const {fn, defaultOpts = {}} = sanitizers[type]
   return fn(value, {...defaultOpts, ...opts})
 }
 
 exports.sanitize = sanitize
 
-async function purify(type, value, opts = {}) {
+async function purify(value, type, opts = {}) {
   await validate(type, value, opts)
   return sanitizers[type] ? sanitize(type, value, opts) : value
 }

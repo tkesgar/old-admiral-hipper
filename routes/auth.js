@@ -16,9 +16,9 @@ route.get('/auth', (req, res) => {
 })
 
 route.post('/auth/login', handle(async (req, res) => {
-  const {body: {name, password}} = req
+  const {body: {email, password}} = req
 
-  const user = await UserController.authenticate(name, password)
+  const user = await UserController.authenticate(email, password)
   if (!user) {
     res.sendStatus(401)
     return

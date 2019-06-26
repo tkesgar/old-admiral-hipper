@@ -13,22 +13,21 @@ const upload = multer({storage: multer.memoryStorage()})
 const route = router()
 
 // TODO Implementasi lookup chara
-route.get('/chara', (req, res) => res.sendStatus(501))
+route.get('/chara', handle(501))
 
 route.post('/chara',
   checkAuth(),
   handle(async req => {
     const {user, body: {name, bio, info}} = req
 
-    // TODO Semua endpoint POST harus me-return 201 dengan header Location
-    await CharaController.insert(user, name, bio, info)
+    await CharaController.insertChara(user, name, bio, info)
   })
 )
 
 route.use('/chara/:charaId', handle(async (req, res) => {
   const {params: {charaId}} = req
 
-  const chara = await CharaController.findById(charaId)
+  const chara = await CharaController.findCharaById(charaId)
   if (!chara) {
     res.sendStatus(404)
     return
@@ -48,18 +47,18 @@ route.delete('/chara/:charaId',
   handle(async req => {
     const {chara} = req
 
-    await CharaController.delete(chara)
+    await CharaController.deleteChara(chara)
   })
 )
 
 // TODO Implementasi update name
-route.put('/chara/:charaId/name', (req, res) => res.sendStatus(501))
+route.put('/chara/:charaId/name', handle(501))
 
 // TODO Implementasi update bio
-route.put('/chara/:charaId/bio', (req, res) => res.sendStatus(501))
+route.put('/chara/:charaId/bio', handle(501))
 
 // TODO Implementasi delete bio
-route.delete('/chara/:charaId/bio', (req, res) => res.sendStatus(501))
+route.delete('/chara/:charaId/bio', handle(501))
 
 route.get('/chara/:charaId/info', handle(async req => {
   const {chara} = req
@@ -79,13 +78,13 @@ route.post('/chara/:charaId/info',
 route.put('/chara/:charaId/info',
   checkCharaOwner(),
   // TODO Implementasi replace banyak chara info
-  (req, res) => res.sendStatus(501)
+  handle(501)
 )
 
 route.delete('/chara/:charaId/info',
   checkCharaOwner(),
   // TODO Implementasi delete semua chara info
-  (req, res) => res.sendStatus(501)
+  handle(501)
 )
 
 route.use('/chara/:charaId/info/:infoKey', handle(async (req, res) => {

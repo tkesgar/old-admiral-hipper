@@ -2,6 +2,7 @@ const sharp = require('sharp')
 
 const PROCESSORS = {
   avatar: {
+    ext: 'jpg',
     process(buffer) {
       return sharp(buffer)
         .resize(200, 200)
@@ -23,6 +24,12 @@ const PROCESSORS = {
   }
 }
 
+function getFileExt(type) {
+  return PROCESSORS[type].ext || 'jpg'
+}
+
+exports.getFileExt = getFileExt
+
 async function processImage(buffer, type) {
   const {ext = 'jpg', process} = PROCESSORS[type]
 
@@ -42,4 +49,4 @@ async function processImage(buffer, type) {
   }
 }
 
-module.exports = processImage
+exports.processImage = processImage

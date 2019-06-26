@@ -1,5 +1,4 @@
 const {Router: router} = require('express')
-const {default: ow} = require('ow')
 const checkAuth = require('../middlewares/check-auth')
 const handle = require('../lib/handle')
 const UserController = require('../controllers/user')
@@ -24,7 +23,6 @@ route.delete('/me', handle(async req => {
 
 route.put('/me/email', handle(async req => {
   const {user, body: {email}} = req
-  ow(email, ow.string)
 
   await UserController.setEmail(user, email)
 }))
@@ -43,7 +41,6 @@ route.delete('/me/display-name', handle(async req => {
 
 route.put('/me/password', handle(async req => {
   const {user, body: {password}} = req
-  ow(password, ow.string)
 
   await UserController.setPassword(user, password)
 }))
