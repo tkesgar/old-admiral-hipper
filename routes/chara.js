@@ -1,8 +1,8 @@
-const {Router: router} = require('express')
 const multer = require('multer')
+const {Router: router} = require('express')
 const CharaController = require('../controllers/chara')
-const handle = require('../lib/handle')
 const checkAuth = require('../middlewares/check-auth')
+const handle = require('../lib/handle')
 
 function checkCharaOwner() {
   return checkAuth((user, req) => req.chara.userId === req.user.id)

@@ -17,7 +17,8 @@ passport.deserializeUser((id, done) => {
   (async () => {
     const user = await User.findById(id)
     if (!user) {
-      throw new Error('Invalid user id for deserialization')
+      done(null, false)
+      return
     }
 
     done(null, user)

@@ -27,8 +27,8 @@ async function sanitize(value, type, opts = {}) {
 exports.sanitize = sanitize
 
 async function purify(value, type, opts = {}) {
-  await validate(type, value, opts)
-  return sanitizers[type] ? sanitize(type, value, opts) : value
+  await validate(value, type, opts)
+  return sanitizers[type] ? sanitize(value, type, opts) : value
 }
 
 exports.purify = purify

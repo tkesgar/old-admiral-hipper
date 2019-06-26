@@ -1,19 +1,21 @@
 const {Router: router} = require('express')
-const handle = require('../lib/handle')
-const {appCallbackURL} = require('../config/env')
-const toggle = require('../config/toggle')
-const passport = require('../services/passport')
-const {checkRecaptcha} = require('../lib/check-recaptcha')
-const toggleRoute = require('../middlewares/toggle-route')
 const UserController = require('../controllers/user')
+const handle = require('../lib/handle')
+const passport = require('../services/passport')
+const toggle = require('../config/toggle')
+const toggleRoute = require('../middlewares/toggle-route')
+const {appCallbackURL} = require('../config/env')
+const {checkRecaptcha} = require('../lib/check-recaptcha')
+
+const authGoogle = () => passport.authenticate('google')
 
 const route = router()
 
-route.get('/auth', (req, res) => {
+route.get('/auth', handle(req => {
   const {user} = req
 
-  res.json(user ? UserController.getAuthData(user) : null)
-})
+  return user ? UserController.getAuthData(user) : null
+}))
 
 route.post('/auth/login', handle(async (req, res) => {
   const {body: {email, password}} = req
@@ -27,12 +29,11 @@ route.post('/auth/login', handle(async (req, res) => {
   await new Promise((resolve, reject) => {
     req.login(user, err => err ? reject(err) : resolve())
   })
+
+  return '/auth'
 }))
 
-route.get('/auth/logout', (req, res) => {
-  req.logout()
-  res.sendStatus(204)
-})
+route.get('/auth/logout', handle(req => req.logout()))
 
 route.post('/auth/recover', handle(async req => {
   const {body: {email}} = req
@@ -66,7 +67,7 @@ route.post('/auth/register',
   })
 )
 
-route.get('/auth/google', passport.authenticate('google'))
+route.get('/auth/google', authGoogle())
 
 route.get('/auth/google/_callback',
   (req, res, next) => {
@@ -78,7 +79,7 @@ route.get('/auth/google/_callback',
 
     next()
   },
-  passport.authenticate('google'),
+  authGoogle(),
   (req, res) => {
     const {session: {appCallback}} = req
 

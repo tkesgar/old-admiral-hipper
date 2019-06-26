@@ -1,8 +1,8 @@
 const {Router: router} = require('express')
+const CharaController = require('../controllers/chara')
+const UserController = require('../controllers/user')
 const checkAuth = require('../middlewares/check-auth')
 const handle = require('../lib/handle')
-const UserController = require('../controllers/user')
-const CharaController = require('../controllers/chara')
 
 const route = router()
 
