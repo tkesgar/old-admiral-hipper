@@ -1,5 +1,6 @@
 const Row = require('../lib/knex-utils/row')
 const db = require('../services/database')
+const {CUSTOM_KEY_PREFIX} = require('../utils/chara-info')
 
 const TABLE = 'chara_info'
 const TYPE_INTEGER = 'i'
@@ -47,9 +48,16 @@ class CharaInfo extends Row {
     return CharaInfo.find({chara_id: charaId, key}, conn)
   }
 
-  static async findAllByChara(charaId, conn = db) {
-    // eslint-disable-next-line camelcase
-    return CharaInfo.findAll({chara_id: charaId}, conn)
+  static async findAllByChara(charaId, keys = null, conn = db) {
+    return CharaInfo.findAll(function () {
+      this.where('chara_id', charaId)
+
+      if (keys) {
+        this.andWhere(function () {
+          this.whereIn('key', keys)
+        })
+      }
+    }, conn)
   }
 
   static async insert(data, conn = db) {
@@ -92,6 +100,19 @@ class CharaInfo extends Row {
     }))
   }
 
+  static async deleteManyFromChara(charaId, keys, conn = db) {
+    await conn(TABLE)
+      .where('chara_id', charaId)
+      .andWhere(function () {
+        this.whereIn('key', keys)
+      })
+      .delete()
+  }
+
+  static async deleteAllFromChara(charaId, conn = db) {
+    await conn(TABLE).where('chara_id', charaId).delete()
+  }
+
   constructor(row, conn = db) {
     super(TABLE, row, conn)
   }
@@ -105,7 +126,7 @@ class CharaInfo extends Row {
   }
 
   get isCustom() {
-    return this.key.startsWith('x_')
+    return this.key.startsWith(CUSTOM_KEY_PREFIX)
   }
 
   get type() {

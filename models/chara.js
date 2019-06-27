@@ -38,7 +38,7 @@ class Chara extends Row {
       /* eslint-disable camelcase */
       user_id: userId,
       name,
-      bio
+      bio: bio ? JSON.stringify(bio) : null
       /* eslint-enable camelcase */
     })
 
@@ -58,7 +58,7 @@ class Chara extends Row {
   }
 
   get bio() {
-    return this.getColumn('bio')
+    return JSON.parse(this.getColumn('bio'))
   }
 
   async setUserId(userId) {
@@ -70,7 +70,7 @@ class Chara extends Row {
   }
 
   async setBio(bio) {
-    await this.setColumn('bio', bio)
+    await this.setColumn('bio', JSON.stringify(bio))
   }
 }
 

@@ -22,12 +22,12 @@ function handle(handler, middleware = false) {
   return (req, res, next) => (async () => {
     const result = await handler(req, res)
 
-    if (middleware) {
-      next()
+    if (res.headersSent) {
       return
     }
 
-    if (res.headersSent) {
+    if (middleware) {
+      next()
       return
     }
 

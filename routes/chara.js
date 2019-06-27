@@ -17,10 +17,14 @@ route.get('/chara', handle(501))
 
 route.post('/chara',
   checkAuth(),
-  handle(async req => {
+  handle(async (req, res) => {
     const {user, body: {name, bio, info}} = req
 
-    await CharaController.insertChara(user, name, bio, info)
+    const charaId = await CharaController.insertChara(user, name, bio, info)
+
+    res.status(201)
+      .location(`/chara/${charaId}`)
+      .json({id: charaId})
   })
 )
 
@@ -61,30 +65,33 @@ route.put('/chara/:charaId/bio', handle(501))
 route.delete('/chara/:charaId/bio', handle(501))
 
 route.get('/chara/:charaId/info', handle(async req => {
-  const {chara} = req
+  const {chara, query: {key}} = req
 
-  return CharaController.findAllCharaInfo(chara)
+  const keys = key ? (Array.isArray(key) ? key : [key]) : null
+  return CharaController.findAllCharaInfo(chara, keys)
 }))
 
 route.post('/chara/:charaId/info',
   checkCharaOwner(),
   handle(async req => {
-    const {chara, body: {key, value}} = req
+    const {chara, body: {info}} = req
 
-    await CharaController.insertInfo(chara, key, value)
+    await CharaController.insertManyInfo(chara, info)
   })
-)
-
-route.put('/chara/:charaId/info',
-  checkCharaOwner(),
-  // TODO Implementasi replace banyak chara info
-  handle(501)
 )
 
 route.delete('/chara/:charaId/info',
   checkCharaOwner(),
-  // TODO Implementasi delete semua chara info
-  handle(501)
+  handle(async req => {
+    const {chara, body: {keys}} = req
+
+    if (!keys) {
+      await CharaController.deleteAllInfo(chara)
+      return
+    }
+
+    await CharaController.deleteManyInfo(chara, keys)
+  })
 )
 
 route.use('/chara/:charaId/info/:infoKey', handle(async (req, res) => {
