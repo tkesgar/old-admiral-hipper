@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "dev": "NODE_ENV=development nodemon server.js",
+    "dev": "nodemon server.js",
+    "dev:files": "http-server ./.dev/files -p ${FILES_PORT:-3001} --cors -c-1",
     "lint": "xo",
     "knex": "knex"
   },
@@ -38,6 +39,7 @@
     "upash": "^1.0.2"
   },
   "devDependencies": {
+    "http-server": "^0.11.1",
     "husky": "^2.3.0",
     "nodemon": "^1.19.1",
     "xo": "^0.24.0"

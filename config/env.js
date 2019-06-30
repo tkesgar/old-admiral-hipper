@@ -24,8 +24,8 @@ exports.appBaseURL = appBaseURL
 const appCallbackURL = `${appBaseURL}/_callback`
 exports.appCallbackURL = appCallbackURL
 
-const fileDir = path.resolve(process.env.FILE_DIR)
+const fileDir = path.resolve(process.env.FILE_UPLOAD_DIR)
 exports.fileDir = fileDir
 
-const filePublicBaseURL = process.env.FILE_PUBLIC_BASE_URL || `${baseURL}/files`
+const filePublicBaseURL = process.env.FILE_UPLOAD_BASE_URL
 exports.filePublicBaseURL = filePublicBaseURL

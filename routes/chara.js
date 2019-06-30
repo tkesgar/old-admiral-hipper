@@ -146,10 +146,10 @@ route.post('/chara/:charaId/image',
   })
 )
 
-route.use('/chara/:charaId/image/:imageKey', handle(async (req, res) => {
-  const {chara, params: {imageKey}} = req
+route.use('/chara/:charaId/image/:imageType', handle(async (req, res) => {
+  const {chara, params: {imageType}} = req
 
-  const image = await CharaController.findImage(chara, imageKey)
+  const image = await CharaController.findImage(chara, imageType)
   if (!image) {
     res.sendStatus(404)
     return
@@ -159,13 +159,13 @@ route.use('/chara/:charaId/image/:imageKey', handle(async (req, res) => {
 }, true))
 
 // Belum tahu mau diisi apa
-route.get('/chara/:charaId/image/:imageKey', (req, res) => {
+route.get('/chara/:charaId/image/:imageType', (req, res) => {
   const {image} = req
 
   res.json(CharaController.getImageData(image))
 })
 
-route.put('/chara/:charaId/image/:imageKey',
+route.put('/chara/:charaId/image/:imageType',
   checkCharaOwner(),
   upload.single('image'),
   handle(async req => {
@@ -175,7 +175,7 @@ route.put('/chara/:charaId/image/:imageKey',
   })
 )
 
-route.delete('/chara/:charaId/image/:imageKey',
+route.delete('/chara/:charaId/image/:imageType',
   checkCharaOwner(),
   handle(async req => {
     const {image} = req
