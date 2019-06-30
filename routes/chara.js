@@ -133,59 +133,54 @@ route.delete('/chara/:charaId/info/:infoKey',
 route.get('/chara/:charaId/image', handle(async req => {
   const {chara} = req
 
-  return CharaController.findAllCharaImage(chara)
+  return CharaController.findAllImage(chara)
 }))
 
 route.post('/chara/:charaId/image',
   checkCharaOwner(),
   upload.single('image'),
-  async req => {
-    const {chara, file: {buffer}, body: {key}} = req
+  handle(async req => {
+    const {chara, file: {buffer}, body: {type}} = req
 
-    await CharaController.insertImage(chara, key, buffer)
-  }
+    await CharaController.insertImage(chara, type, buffer)
+  })
 )
 
 route.use('/chara/:charaId/image/:imageKey', handle(async (req, res) => {
   const {chara, params: {imageKey}} = req
 
-  const charaImage = await CharaController.findImage(chara, imageKey)
-  if (!charaImage) {
+  const image = await CharaController.findImage(chara, imageKey)
+  if (!image) {
     res.sendStatus(404)
     return
   }
 
-  req.charaImage = charaImage
+  req.image = image
 }, true))
 
+// Belum tahu mau diisi apa
 route.get('/chara/:charaId/image/:imageKey', (req, res) => {
-  const {charaImage} = req
+  const {image} = req
 
-  res.json(CharaController.getImageData(charaImage))
+  res.json(CharaController.getImageData(image))
 })
 
-route.get('/chara/:charaId/image/:imageKey/url', (req, res) => {
-  const {charaImage} = req
-
-  res.redirect(CharaController.getImageURL(charaImage))
-})
-
-route.put('/chara/:charaId/image/:fileKey',
+route.put('/chara/:charaId/image/:imageKey',
   checkCharaOwner(),
   upload.single('image'),
   handle(async req => {
-    const {charaImage, file: {buffer}} = req
+    const {image, file: {buffer}} = req
 
-    await CharaController.updateImage(charaImage, buffer)
+    await CharaController.updateImage(image, buffer)
   })
 )
 
-route.delete('/chara/:charaId/image/:fileKey',
+route.delete('/chara/:charaId/image/:imageKey',
   checkCharaOwner(),
   handle(async req => {
-    const {charaImage} = req
+    const {image} = req
 
-    await CharaController.deleteImage(charaImage)
+    await CharaController.deleteImage(image)
   })
 )
 

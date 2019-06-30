@@ -15,26 +15,23 @@ async function mkdirpAsync(dir) {
 }
 
 class FileIO {
-  constructor(id, ext = null) {
-    this.id = id
-    this.ext = ext
+  constructor(file) {
+    this.file = file
     this._writeReady = false
   }
 
-  get fileName() {
-    return this.ext ? `${this.name}.${this.ext}` : this.name
+  get dirs() {
+    return this.file.rand.match(/.{1,3}/g).slice(0, 2)
   }
 
   get filePath() {
-    const dir1 = this.name.slice(0, 2)
-    const dir2 = this.name.slice(2, 4)
-    return path.join(fileDir, dir1, dir2, this.fileName)
+    const [dir1, dir2] = this.dirs
+    return path.join(fileDir, dir1, dir2, this.file.name)
   }
 
   get publicURL() {
-    const dir1 = this.name.slice(0, 2)
-    const dir2 = this.name.slice(2, 4)
-    return path.posix.join(filePublicBaseURL, dir1, dir2, this.fileName)
+    const [dir1, dir2] = this.dirs
+    return path.posix.join(filePublicBaseURL, dir1, dir2, this.file.name)
   }
 
   async read() {
@@ -42,10 +39,7 @@ class FileIO {
   }
 
   async write(data) {
-    if (!this._writeReady) {
-      await this.prepareWrite()
-    }
-
+    await this.prepareWrite()
     return fsWriteFileAsync(this.filePath, data)
   }
 
@@ -64,7 +58,7 @@ class FileIO {
 
   get writeStream() {
     if (!this._writeReady) {
-      throw new Error('File stream is not ready; call prepareWrite() first')
+      throw new Error('Not ready to write; call prepareWrite() first')
     }
 
     return fs.createWriteStream(this.filePath)

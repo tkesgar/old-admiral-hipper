@@ -17,6 +17,10 @@ exports.up = async knex => {
       .unsigned()
       .notNullable()
 
+    table.string('rand', 32)
+      .notNullable()
+      .unique()
+
     table.string('ext', 8)
       .notNullable()
 

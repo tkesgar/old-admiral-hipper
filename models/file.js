@@ -1,7 +1,14 @@
+const crypto = require('crypto')
 const Row = require('../lib/knex-utils/row')
 const db = require('../services/database')
 
 const TABLE = 'file'
+
+function getRandom() {
+  const rand = crypto.randomBytes(8).toString('hex')
+  const ts = Date.now().toString(16)
+  return rand + ts
+}
 
 class File extends Row {
   static async findAll(where, conn = db) {
@@ -19,17 +26,37 @@ class File extends Row {
   static async insert(data, conn = db) {
     const {
       userId,
-      ext
+      ext,
+      rand = getRandom()
     } = data
 
     const [id] = await conn(TABLE).insert({
       /* eslint-disable camelcase */
       user_id: userId,
-      ext
+      ext,
+      rand
       /* eslint-enable camelcase */
     })
 
     return id
+  }
+
+  static async insertMany(manyData, conn = db) {
+    await conn(TABLE).insert(manyData.map(data => {
+      const {
+        userId,
+        ext,
+        rand = getRandom()
+      } = data
+
+      return {
+        /* eslint-disable camelcase */
+        user_id: userId,
+        ext,
+        rand
+        /* eslint-enable camelcase */
+      }
+    }))
   }
 
   constructor(row, conn = db) {
@@ -40,12 +67,16 @@ class File extends Row {
     return this.getColumn('user_id')
   }
 
+  get rand() {
+    return this.getColumn('rand')
+  }
+
   get ext() {
     return this.getColumn('ext')
   }
 
-  get filename() {
-    return `${this.id}.${this.ext}`
+  get name() {
+    return `${this.rand}.${this.ext}`
   }
 
   async setUserId(userId) {
@@ -54,10 +85,6 @@ class File extends Row {
 
   async setExt(ext) {
     await this.setColumn('ext', ext)
-  }
-
-  async touch() {
-    await this.setColumn('updated_time', db.fn.now())
   }
 }
 

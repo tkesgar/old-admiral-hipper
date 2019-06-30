@@ -1,3 +1,4 @@
+const sharp = require('sharp')
 const Chara = require('../models/chara')
 const CharaInfo = require('../models/chara-info')
 const CharaFile = require('../models/chara-file')
@@ -6,7 +7,7 @@ const db = require('../services/database')
 const {purify} = require('../services/purify')
 const {AppError} = require('../utils/error')
 const FileIO = require('../services/file-io')
-const {getFileExt, processImage} = require('../services/image')
+const {convert} = require('../services/image')
 const {getInfoGroupKeys} = require('../utils/chara-info')
 
 exports.findAllByUser = async user => {
@@ -130,119 +131,117 @@ exports.deleteAllInfo = async chara => {
   await CharaInfo.deleteAllFromChara(chara.id)
 }
 
-exports.findAllCharaImage = async chara => {
+exports.findAllImage = async chara => {
   const charaFiles = await CharaFile.findAllByChara(chara.id)
 
-  const filesDict = (await File.findAll(function () {
+  const files = await File.findAll(function () {
     this.whereIn('id', charaFiles.map(charaFile => charaFile.fileId))
-  })).reduce((dict, file) => {
-    dict[file.id] = file
-    return dict
-  }, {})
+  })
 
-  return charaFiles.reduce((dict, charaFile) => {
-    const file = filesDict[charaFile.fileId]
+  const data = {}
 
-    dict[charaFile.key] = {
-      url: new FileIO(String(file.id), file.ext).publicURL
+  for (const charaFile of charaFiles) {
+    const {key, fileId} = charaFile
+    const file = files.find(file => file.id === fileId)
+
+    data[key] = {
+      url: new FileIO(file).publicURL
     }
+  }
 
-    return dict
-  }, {})
+  return data
 }
 
-exports.insertImage = async (chara, key, buffer) => {
-  await purify(key, 'chara-image-key')
+exports.insertImage = async (chara, type, buffer) => {
+  await purify(type, 'chara-image-type')
 
   return db.transaction(async trx => {
-    const {data, ext} = await processImage(buffer, key)
+    const baseSharpInstance = sharp(buffer)
+    const convertInfoSet = [
+      [type, null],
+      [type, 'sm']
+    ]
 
-    const fileId = await File.insert({
-      userId: chara.userId,
-      ext
-    })
+    // TODO Tampilkan error jika gambar sudah ada (sekarang masih SERVER_OOPS)
+    await Promise.all(convertInfoSet.map(async convertInfo => {
+      const [type, variant] = convertInfo
+      const {ext, buffer: imageBuffer} = await convert(baseSharpInstance, type, variant)
 
-    await CharaFile.insert({
-      charaId: chara.id,
-      key,
-      fileId
-    }, trx)
+      const fileId = await File.insert({userId: chara.userId, ext}, trx)
+      const file = await File.findById(fileId, trx)
 
-    await new FileIO(String(fileId), ext).write(data)
+      const key = variant ? `${type}.${variant}` : type
+
+      await CharaFile.insert({
+        charaId: chara.id,
+        key,
+        fileId
+      }, trx)
+
+      await new FileIO(file).write(imageBuffer)
+    }))
   })
 }
 
-exports.findImage = async (chara, fileKey) => {
-  return CharaFile.findByCharaKey(chara.id, fileKey)
-}
-
-exports.getImageData = charaFile => {
-  const ext = getFileExt(charaFile.key)
-  const fileIO = new FileIO(String(charaFile.fileId), ext)
-
-  return {
-    url: fileIO.publicURL
+exports.findImage = async (chara, type) => {
+  const charaFiles = await CharaFile.findAllByCharaType(chara.id, type)
+  if (charaFiles.length === 0) {
+    return null
   }
+
+  const files = await File.findAll(function () {
+    this.whereIn('id', charaFiles.map(charaFile => charaFile.fileId))
+  })
+
+  const image = {}
+
+  for (const charaFile of charaFiles) {
+    const file = files.find(file => file.id === charaFile.fileId)
+
+    image[charaFile.key] = {charaFile, file}
+  }
+
+  return image
 }
 
-exports.getImageURL = charaFile => {
-  const ext = getFileExt(charaFile.key)
-  return new FileIO(String(charaFile.fileId), ext).publicURL
+exports.getImageData = image => {
+  const data = {}
+
+  for (const [key, {file}] of Object.entries(image)) {
+    data[key] = {url: new FileIO(file).publicURL}
+  }
+
+  return data
 }
 
-exports.updateImage = async (charaFile, buffer) => {
-  const {data, ext} = await processImage(buffer, charaFile.key)
+exports.updateImage = async (image, buffer) => {
+  const sharpInstance = sharp(buffer)
 
-  const fileIO = new FileIO(String(charaFile.fileId), ext)
-  await fileIO.write(data)
-}
-
-exports.deleteImage = async charaFile => {
   await db.transaction(async trx => {
-    const file = await File.findById(charaFile.fileId, trx)
-    await file.delete()
+    await Promise.all(Object.values(image).map(async ({charaFile, file}) => {
+      file.setConnection(trx)
 
-    const fileIO = new FileIO(String(charaFile.fileId), file.ext)
-    await fileIO.delete()
+      const {type, variant} = charaFile
+      const {ext, buffer: imageBuffer} = await convert(sharpInstance, type, variant)
+
+      await file.setExt(ext)
+      new FileIO(file).write(imageBuffer)
+      console.log(file.name)
+
+      file.setConnection(null)
+    }))
   })
 }
 
-/* =
-exports.find = async key => {
-  return (await Chara.findById(key)) || (await Chara.findByName(key)) || null
-}
+exports.deleteImage = async image => {
+  await db.transaction(async trx => {
+    await Promise.all(Object.values(image).map(async ({file}) => {
+      file.setConnection(trx)
 
-exports.findAllByUser = async user => {
-  return (await Chara.findAllByUser(user.id)).map(chara => chara.getData({bio: false}))
-}
+      await file.delete()
+      new FileIO(file).delete()
 
-exports.insert = async (userId, name, bio = null, entries = null) => {
-  v.validateName(name)
-  v.validateBio(bio)
-  if (entries) {
-    v.validateCharaInfoEntries(entries)
-  }
-
-  return db.transaction(async trx => {
-    const charaId = await Chara.insert({userId, name, bio}, trx)
-
-    if (entries) {
-      await CharaInfo.insertMany(entries.map(entry => {
-        const {key, value} = entry
-        return {
-          charaId,
-          key,
-          value
-        }
-      }), trx)
-    }
-
-    return charaId
+      file.setConnection(null)
+    }))
   })
 }
-
-exports.delete = async chara => {
-  await chara.delete()
-  log.debug({chara}, 'Chara deleted')
-}
-*/

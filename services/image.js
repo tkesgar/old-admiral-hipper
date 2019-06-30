@@ -1,52 +1,88 @@
 const sharp = require('sharp')
 
-const PROCESSORS = {
+const IMAGE_INFO = {
   avatar: {
-    ext: 'jpg',
-    process(buffer) {
-      return sharp(buffer)
-        .resize(200, 200)
+    ext: 'jpeg',
+    convert(sharpInstance) {
+      return sharpInstance
+        .resize(200, 200, {background: {r: 255, g: 255, b: 255}})
+        .jpeg()
+    },
+    variant: {
+      sm: {
+        convert(sharpInstance) {
+          return sharpInstance
+            .resize(50, 50, {background: {r: 255, g: 255, b: 255}})
+            .jpeg()
+        }
+      }
     }
   },
   portrait: {
-    ext: 'png',
-    process(buffer) {
-      return sharp(buffer)
-        .resize(400, 600)
+    ext: 'jpeg',
+    convert(sharpInstance) {
+      return sharpInstance
+        .resize(400, 600, {background: {r: 255, g: 255, b: 255}})
+        .jpeg()
+    },
+    variant: {
+      sm: {
+        convert(sharpInstance) {
+          return sharpInstance
+            .resize(40, 60, {background: {r: 255, g: 255, b: 255}})
+            .jpeg()
+        }
+      }
     }
   },
   fullbody: {
     ext: 'png',
-    process(buffer) {
-      return sharp(buffer)
-        .resize(400, 800, {fit: 'contain'})
+    convert(sharpInstance) {
+      return sharpInstance
+        .resize(800, 800, {fit: 'contain', background: {r: 0, g: 0, b: 0, alpha: 0}})
+        .png()
+    },
+    variant: {
+      sm: {
+        convert(sharpInstance) {
+          return sharpInstance
+            .resize(80, 80, {fit: 'contain', background: {r: 0, g: 0, b: 0, alpha: 0}})
+            .png()
+        }
+      }
     }
   }
 }
 
-function getFileExt(type) {
-  return PROCESSORS[type].ext || 'jpg'
-}
+exports.IMAGE_TYPES = Object.keys(IMAGE_INFO)
 
-exports.getFileExt = getFileExt
-
-async function processImage(buffer, type) {
-  const {ext = 'jpg', process} = PROCESSORS[type]
-
-  const image = process(buffer)
-
-  switch (ext) {
-    case 'png':
-      image.png()
-      break
-    default:
-      image.jpg()
+function getImageVariants(type) {
+  if (!type) {
+    throw new Error(`Unknown image type: ${type}`)
   }
 
-  return {
-    data: await image.toBuffer(),
-    ext
-  }
+  const {variant} = IMAGE_INFO[type]
+  return variant ? Object.keys(IMAGE_INFO[type].variant) : []
 }
 
-exports.processImage = processImage
+exports.getImageVariants = getImageVariants
+
+async function convert(sharpInstance, type, variant = null) {
+  const imageInfo = {...IMAGE_INFO[type]}
+  if (variant) {
+    Object.assign(imageInfo, IMAGE_INFO[type].variant[variant])
+  }
+
+  const {ext, convert} = imageInfo
+  const buffer = await convert(sharpInstance.clone()).toBuffer()
+
+  return {buffer, ext}
+}
+
+exports.convert = convert
+
+async function convertImage(buffer, type, variant = null) {
+  return convert(sharp(buffer), type, variant)
+}
+
+exports.convertImage = convertImage

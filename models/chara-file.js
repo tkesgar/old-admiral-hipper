@@ -26,6 +26,13 @@ class CharaFile extends Row {
     return CharaFile.findAll({chara_id: charaId}, conn)
   }
 
+  static async findAllByCharaType(charaId, type, conn = db) {
+    return CharaFile.findAll(function () {
+      this.where('chara_id', charaId)
+        .andWhere('key', 'like', `${type}%`)
+    }, conn)
+  }
+
   static async insert(data, conn = db) {
     const {
       charaId,
@@ -72,6 +79,14 @@ class CharaFile extends Row {
 
   get key() {
     return this.getColumn('key')
+  }
+
+  get type() {
+    return this.key.split('.').shift()
+  }
+
+  get variant() {
+    return this.key.split('.').slice(1).pop() || null
   }
 
   get fileId() {
