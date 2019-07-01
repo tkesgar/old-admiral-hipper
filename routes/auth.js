@@ -73,24 +73,8 @@ route.post('/auth/register',
 route.get('/auth/google', authGoogle())
 
 route.get('/auth/google/_callback',
-  (req, res, next) => {
-    const {query: {app}} = req
-
-    if (typeof app !== 'undefined') {
-      res.session.appCallback = true
-    }
-
-    next()
-  },
   authGoogle(),
-  (req, res) => {
-    const {session: {appCallback}} = req
-
-    if (appCallback) {
-      res.redirect(`${appCallbackURL}?info=auth`)
-      delete res.session.appCallback
-    }
-  }
+  (req, res) => res.redirect(`${appCallbackURL}?info=auth`)
 )
 
 module.exports = route
