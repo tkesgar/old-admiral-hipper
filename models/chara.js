@@ -25,6 +25,11 @@ class Chara extends Row {
     return Chara.findAll({user_id: userId}, conn)
   }
 
+  static async countAllByUser(userId, conn = db) {
+    const [{'count(*)': count}] = await conn(TABLE).where('user_id', userId).count()
+    return count
+  }
+
   static async insert(data, conn = db) {
     const {
       userId,

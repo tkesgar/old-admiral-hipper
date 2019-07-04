@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 const createApp = require('./lib/create-app')
 const log = require('./services/log')
 

@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "nodemon server.js",
     "dev:files": "http-server ./.dev/files -p ${FILES_PORT:-3001} --cors -c-1",
+    "dev:console": "node console.js --experimental-repl-await",
     "lint": "xo",
     "knex": "knex"
   },

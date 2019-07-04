@@ -9,6 +9,11 @@ const {AppError} = require('../utils/error')
 const FileIO = require('../services/file-io')
 const {convert} = require('../services/image')
 const {getInfoGroupKeys} = require('../utils/chara-info')
+const {
+  MAX_CHARA_INFO_PER_CHARA,
+  MAX_CHARA_FILE_PER_CHARA,
+  MAX_CHARA_PER_USER
+} = require('../config/limits')
 
 exports.findAllByUser = async user => {
   return (await Chara.findAllByUser(user.id)).map(chara => ({
@@ -19,6 +24,11 @@ exports.findAllByUser = async user => {
 }
 
 exports.insertChara = async (user, name, bio = null, info = null) => {
+  const countChara = await Chara.countAllByUser(user.id)
+  if (countChara === MAX_CHARA_PER_USER) {
+    throw new AppError('Limit reached', 'LIMIT')
+  }
+
   await purify(name, 'name')
 
   if (bio) {
@@ -80,6 +90,11 @@ exports.findAllCharaInfo = async (chara, keys = null) => {
 }
 
 exports.insertInfo = async (chara, key, value) => {
+  const countCharaInfo = await CharaInfo.countAllByChara(chara.id)
+  if (countCharaInfo === MAX_CHARA_INFO_PER_CHARA) {
+    throw new AppError('Limit reached', 'LIMIT')
+  }
+
   await purify({key, value}, 'chara-info')
 
   return CharaInfo.insert({charaId: chara.id, key, value})
@@ -106,6 +121,7 @@ exports.getCharaInfoData = charaInfo => {
   }
 }
 
+// FIXME Ini celah bisa update satu info jadi tidak konsisten (contoh: update birthday.d saja)
 exports.updateInfo = async (charaInfo, value) => {
   await purify({key: charaInfo.key, value}, 'chara-info')
 
@@ -153,6 +169,11 @@ exports.findAllImage = async chara => {
 }
 
 exports.insertImage = async (chara, type, buffer) => {
+  const countCharaFile = await CharaFile.countAllByChara(chara.id)
+  if (countCharaFile === MAX_CHARA_FILE_PER_CHARA) {
+    throw new AppError('Limit reached', 'LIMIT')
+  }
+
   await purify(type, 'chara-image-type')
 
   return db.transaction(async trx => {

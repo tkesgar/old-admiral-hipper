@@ -113,6 +113,11 @@ class CharaInfo extends Row {
     await conn(TABLE).where('chara_id', charaId).delete()
   }
 
+  static async countAllByChara(charaId, conn = db) {
+    const [{'count(*)': count}] = await conn(TABLE).where('chara_id', charaId).count()
+    return count
+  }
+
   constructor(row, conn = db) {
     super(TABLE, row, conn)
   }
