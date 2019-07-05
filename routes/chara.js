@@ -56,7 +56,14 @@ route.delete('/chara/:charaId',
 )
 
 // TODO Implementasi update name
-route.put('/chara/:charaId/name', handle(501))
+route.put('/chara/:charaId/name',
+  checkCharaOwner(),
+  handle(async req => {
+    const {chara} = req
+
+    await CharaController.updateCharaName(chara)
+  })
+)
 
 // TODO Implementasi update bio
 route.put('/chara/:charaId/bio', handle(501))

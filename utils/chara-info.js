@@ -55,8 +55,8 @@ const ALLOWED_KEYS = [
 
 exports.ALLOWED_KEYS = ALLOWED_KEYS
 
-const GROUPS = [
-  {
+const GROUPS = {
+  'birthday': {
     keys: ['birthday.d', 'birthday.m'],
     validate(day, month) {
       ow(month, ow.number.inRange(1, 12).integer)
@@ -83,23 +83,33 @@ const GROUPS = [
       }))
     }
   },
-  {
+  'threesizes': {
     keys: ['threesizes.b', 'threesizes.w', 'threesizes.h']
   },
-  {
-    keys: ['fav.color.r', 'fav.color.g', 'fav.color.b']
+  'fav_color': {
+    keys: ['fav_color.r', 'fav_color.g', 'fav_color.b']
   },
-  {
-    keys: ['hair.color.r', 'hair.color.g', 'hair.color.b']
+  'hair_color': {
+    keys: ['hair_color.r', 'hair_color.g', 'hair_color.b']
   },
-  {
-    keys: ['eye.color.r', 'eye.color.g', 'eye.color.b']
+  'eye_color': {
+    keys: ['eye_color.r', 'eye_color.g', 'eye_color.b']
   }
-]
+}
 
 exports.GROUPS = GROUPS
 
+exports.getInfoGroupFromKey = key => {
+  for (const [infoGroup, group] of Object.entries(GROUPS)) {
+    if (group.keys.includes(key)) {
+      return infoGroup
+    }
+  }
+
+  return null
+}
+
 exports.getInfoGroupKeys = key => {
-  const group = GROUPS.find(group => group.keys.includes(key))
+  const group = Object.values(GROUPS).find(group => group.keys.includes(key))
   return group ? group.keys : null
 }

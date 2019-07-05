@@ -3,10 +3,9 @@ const {GROUPS} = require('../../utils/chara-info')
 
 module.exports = {
   fn(value) {
-    console.log(value)
     ow(value, ow.object.valuesOfType(ow.any(ow.string, ow.number.integer)))
 
-    GROUPS
+    Object.values(GROUPS)
       .filter(test => test.keys.find(key => typeof value[key] !== 'undefined'))
       .forEach(test => {
         const {keys, validate} = test

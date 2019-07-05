@@ -8,7 +8,7 @@ const {purify} = require('../services/purify')
 const {AppError} = require('../utils/error')
 const FileIO = require('../services/file-io')
 const {convert} = require('../services/image')
-const {getInfoGroupKeys} = require('../utils/chara-info')
+const {getInfoGroupKeys, getInfoGroupFromKey, GROUPS} = require('../utils/chara-info')
 const {
   MAX_CHARA_INFO_PER_CHARA,
   MAX_CHARA_FILE_PER_CHARA,
@@ -77,6 +77,12 @@ exports.getCharaData = chara => {
   }
 }
 
+exports.updateCharaName = async (chara, newName) => {
+  await purify(newName, 'name')
+
+  await chara.setName(newName)
+}
+
 exports.deleteChara = async chara => {
   await chara.delete()
 }
@@ -121,9 +127,25 @@ exports.getCharaInfoData = charaInfo => {
   }
 }
 
-// FIXME Ini celah bisa update satu info jadi tidak konsisten (contoh: update birthday.d saja)
 exports.updateInfo = async (charaInfo, value) => {
   await purify({key: charaInfo.key, value}, 'chara-info')
+
+  const infoGroupName = getInfoGroupFromKey(charaInfo.key)
+  if (infoGroupName) {
+    const manyInfo = await CharaInfo.findAllByChara(charaInfo.charaId)
+    const subManyGroupInfo = {}
+
+    for (const key of GROUPS[infoGroupName].keys) {
+      const findCharaInfo = manyInfo.find(info => info.key === key)
+      if (!findCharaInfo) {
+        throw new Error(`Chara does not have info ${key} for group ${infoGroupName}`)
+      }
+
+      subManyGroupInfo[findCharaInfo.key] = findCharaInfo.value
+    }
+
+    await purify(subManyGroupInfo, 'chara-info-entries')
+  }
 
   await charaInfo.setValue(value)
 }

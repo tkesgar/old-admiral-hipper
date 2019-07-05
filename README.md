@@ -1,7 +1,5 @@
 # admiral-hipper
 
-> Server back-end untuk [Charaverse](https://charaverse.tkesgar.com)
-
 ## Kebutuhan sistem
 
   - Node.js

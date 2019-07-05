@@ -5,7 +5,7 @@ module.exports = {
   fn(value) {
     ow(value, ow.array.ofType(ow.string.oneOf(ALLOWED_KEYS)))
 
-    GROUPS
+    Object.values(GROUPS)
       .filter(test => test.keys.find(key => value.includes(key)))
       .forEach(({keys}) => ow(value, ow.array.includes(...keys)))
   }
