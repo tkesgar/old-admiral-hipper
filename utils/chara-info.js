@@ -17,7 +17,6 @@ const VALIDATORS = {
   'threesizes.b': ow.number.integer.positive,
   'threesizes.w': ow.number.integer.positive,
   'threesizes.h': ow.number.integer.positive,
-  'handedness': ow.string.oneOf(['right', 'left', 'mixed', 'ambidexterity']),
   'hobby': ow.string,
   'skill': ow.string,
   'fav_food': ow.string,
@@ -34,7 +33,6 @@ const VALIDATORS = {
   'horoscope': ow.string,
   'hometown': ow.string,
   'gender': ow.string,
-  'species': ow.string,
   'hair_length': ow.string.oneOf(['nohair', 'ear', 'neck', 'shoulder', 'chest', 'waist', 'leg', 'floor'])
 }
 
