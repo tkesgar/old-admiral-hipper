@@ -267,9 +267,13 @@ exports.updateImage = async (image, buffer) => {
       const {type, variant} = charaFile
       const {ext, buffer: imageBuffer} = await convert(sharpInstance, type, variant)
 
+      // Delete old file then get new hash
+      await new FileIO(file).delete()
+
+      await file.setRand()
       await file.setExt(ext)
-      new FileIO(file).write(imageBuffer)
-      console.log(file.name)
+
+      await new FileIO(file).write(imageBuffer)
 
       file.setConnection(null)
     }))

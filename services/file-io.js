@@ -2,7 +2,7 @@ const fs = require('fs')
 const path = require('path')
 const util = require('util')
 const mkdirp = require('mkdirp')
-const {fileDir, filePublicBaseURL} = require('../config/env')
+const {fileDir} = require('../config/env')
 
 const fsReadFileAsync = util.promisify(fs.readFile)
 const fsWriteFileAsync = util.promisify(fs.writeFile)
@@ -31,7 +31,10 @@ class FileIO {
 
   get publicURL() {
     const [dir1, dir2] = this.dirs
-    return path.posix.join(filePublicBaseURL, dir1, dir2, this.file.name)
+    return new URL(
+      path.posix.join(process.env.FILE_UPLOAD_BASE_PATH, dir1, dir2, this.file.name),
+      process.env.FILE_UPLOAD_BASE_URL
+    )
   }
 
   async read() {

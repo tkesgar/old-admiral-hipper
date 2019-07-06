@@ -79,6 +79,10 @@ class File extends Row {
     return `${this.rand}.${this.ext}`
   }
 
+  async setRand(rand = getRandom()) {
+    await this.setColumn('rand', rand)
+  }
+
   async setUserId(userId) {
     await this.setColumn('user_id', userId)
   }

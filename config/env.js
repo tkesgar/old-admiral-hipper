@@ -26,6 +26,3 @@ exports.appCallbackURL = appCallbackURL
 
 const fileDir = path.resolve(process.env.FILE_UPLOAD_DIR)
 exports.fileDir = fileDir
-
-const filePublicBaseURL = process.env.FILE_UPLOAD_BASE_URL
-exports.filePublicBaseURL = filePublicBaseURL

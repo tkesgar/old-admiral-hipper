@@ -5,14 +5,14 @@ const IMAGE_INFO = {
     ext: 'jpeg',
     convert(sharpInstance) {
       return sharpInstance
-        .resize(200, 200, {background: {r: 255, g: 255, b: 255}})
+        .resize(200, 200)
         .jpeg()
     },
     variant: {
       sm: {
         convert(sharpInstance) {
           return sharpInstance
-            .resize(50, 50, {background: {r: 255, g: 255, b: 255}})
+            .resize(50, 50)
             .jpeg()
         }
       }
@@ -22,14 +22,14 @@ const IMAGE_INFO = {
     ext: 'jpeg',
     convert(sharpInstance) {
       return sharpInstance
-        .resize(400, 600, {background: {r: 255, g: 255, b: 255}})
+        .resize(400, 600)
         .jpeg()
     },
     variant: {
       sm: {
         convert(sharpInstance) {
           return sharpInstance
-            .resize(40, 60, {background: {r: 255, g: 255, b: 255}})
+            .resize(40, 60)
             .jpeg()
         }
       }
@@ -39,14 +39,14 @@ const IMAGE_INFO = {
     ext: 'png',
     convert(sharpInstance) {
       return sharpInstance
-        .resize(800, 800, {fit: 'contain', background: {r: 0, g: 0, b: 0, alpha: 0}})
+        .resize(600, 800, {fit: 'contain', background: {r: 0, g: 0, b: 0, alpha: 0}})
         .png()
     },
     variant: {
       sm: {
         convert(sharpInstance) {
           return sharpInstance
-            .resize(80, 80, {fit: 'contain', background: {r: 0, g: 0, b: 0, alpha: 0}})
+            .resize(60, 80, {fit: 'contain', background: {r: 0, g: 0, b: 0, alpha: 0}})
             .png()
         }
       }

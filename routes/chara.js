@@ -1,3 +1,4 @@
+const {default: ow} = require('ow')
 const multer = require('multer')
 const {Router: router} = require('express')
 const CharaController = require('../controllers/chara')
@@ -176,9 +177,13 @@ route.put('/chara/:charaId/image/:imageType',
   checkCharaOwner(),
   upload.single('image'),
   handle(async req => {
-    const {image, file: {buffer}} = req
+    // TODO Destructuring file begini yang lain dicheck dulu biar nggak server oops
+    const {image, file} = req
+    ow(file, ow.object.partialShape({
+      buffer: ow.object.instanceOf(Buffer)
+    }))
 
-    await CharaController.updateImage(image, buffer)
+    await CharaController.updateImage(image, file.buffer)
   })
 )
 
