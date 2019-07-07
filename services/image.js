@@ -39,14 +39,14 @@ const IMAGE_INFO = {
     ext: 'png',
     convert(sharpInstance) {
       return sharpInstance
-        .resize(600, 800, {fit: 'contain', background: {r: 0, g: 0, b: 0, alpha: 0}})
+        .resize(800, 800, {fit: 'contain', background: {r: 0, g: 0, b: 0, alpha: 0}})
         .png()
     },
     variant: {
       sm: {
         convert(sharpInstance) {
           return sharpInstance
-            .resize(60, 80, {fit: 'contain', background: {r: 0, g: 0, b: 0, alpha: 0}})
+            .resize(80, 80, {fit: 'contain', background: {r: 0, g: 0, b: 0, alpha: 0}})
             .png()
         }
       }

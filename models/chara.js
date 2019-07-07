@@ -63,7 +63,8 @@ class Chara extends Row {
   }
 
   get bio() {
-    return JSON.parse(this.getColumn('bio'))
+    const bioJSON = this.getColumn('bio')
+    return bioJSON ? JSON.parse(bioJSON) : null
   }
 
   async setUserId(userId) {
@@ -75,7 +76,7 @@ class Chara extends Row {
   }
 
   async setBio(bio) {
-    await this.setColumn('bio', JSON.stringify(bio))
+    await this.setColumn('bio', bio ? JSON.stringify(bio) : null)
   }
 }
 

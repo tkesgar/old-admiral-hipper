@@ -74,7 +74,7 @@ route.get('/auth/google', authGoogle())
 
 route.get('/auth/google/_callback',
   authGoogle(),
-  (req, res) => res.redirect(`${appCallbackURL}?info=auth`)
+  (req, res) => res.redirect(`${appCallbackURL}?action=auth`)
 )
 
 module.exports = route

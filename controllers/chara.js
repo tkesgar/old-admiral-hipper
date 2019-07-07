@@ -83,8 +83,36 @@ exports.updateCharaName = async (chara, newName) => {
   await chara.setName(newName)
 }
 
+exports.updateCharaBio = async (chara, newBio) => {
+  await purify(newBio, 'bio')
+
+  await chara.setBio(newBio)
+}
+
+exports.deleteCharaBio = async chara => {
+  await chara.setBio(null)
+}
+
 exports.deleteChara = async chara => {
-  await chara.delete()
+  await db.transaction(async trx => {
+    chara.setConnection(trx)
+
+    const files = await File.findAll(function () {
+      this.whereIn('id', function () {
+        this.select('file_id')
+          .from('chara_file')
+          .where('chara_id', chara.id)
+      })
+    }, trx)
+
+    await File.deleteMany(files.map(file => file.id), trx)
+
+    await chara.delete()
+
+    await Promise.all(files.map(file => new FileIO(file).delete()))
+
+    chara.setConnection(null)
+  })
 }
 
 exports.findAllCharaInfo = async (chara, keys = null) => {

@@ -60,14 +60,36 @@ route.delete('/chara/:charaId',
 route.put('/chara/:charaId/name',
   checkCharaOwner(),
   handle(async req => {
-    const {chara} = req
+    const {chara, body} = req
+    ow(body, ow.object.partialShape({
+      name: ow.string
+    }))
 
-    await CharaController.updateCharaName(chara)
+    await CharaController.updateCharaName(chara, body.name)
   })
 )
 
 // TODO Implementasi update bio
-route.put('/chara/:charaId/bio', handle(501))
+route.put('/chara/:charaId/bio',
+  checkCharaOwner(),
+  handle(async req => {
+    const {chara, body} = req
+    ow(body, ow.object.partialShape({
+      bio: ow.object
+    }))
+
+    await CharaController.updateCharaBio(chara, body.bio)
+  })
+)
+
+route.delete('/chara/:charaId/bio',
+  checkCharaOwner(),
+  handle(async req => {
+    const {chara} = req
+
+    await CharaController.deleteCharaBio(chara)
+  })
+)
 
 // TODO Implementasi delete bio
 route.delete('/chara/:charaId/bio', handle(501))

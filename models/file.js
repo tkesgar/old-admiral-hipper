@@ -59,6 +59,10 @@ class File extends Row {
     }))
   }
 
+  static async deleteMany(fileIds, conn = db) {
+    await conn(TABLE).whereIn('id', fileIds).delete()
+  }
+
   constructor(row, conn = db) {
     super(TABLE, row, conn)
   }
