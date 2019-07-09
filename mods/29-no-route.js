@@ -1,4 +1,4 @@
-const log = require('../utils/log')
+const log = require('../services/log')
 
 module.exports = app => {
   app.use((req, res) => {

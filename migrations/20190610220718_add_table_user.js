@@ -13,7 +13,7 @@ exports.up = async knex => {
       .notNullable()
       .defaultTo(knex.raw('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
 
-    table.string('name', 16)
+    table.string('email', 128)
       .notNullable()
       .unique()
 
@@ -22,26 +22,26 @@ exports.up = async knex => {
       .defaultTo(null)
 
     table.string('password_hash', 256)
-      .notNullable()
-
-    table.string('email_hash', 256)
-      .notNullable()
+      .nullable()
+      .defaultTo(null)
 
     table.boolean('email_verified')
       .notNullable()
       .defaultTo(false)
 
-    table.string('recover_password_token', 40)
+    table.string('reset_password_token', 32)
+      .nullable()
+      .defaultTo(null)
+      .unique()
+
+    table.timestamp('reset_password_time')
       .nullable()
       .defaultTo(null)
 
-    table.timestamp('recover_password_time')
+    table.string('email_verify_token', 32)
       .nullable()
       .defaultTo(null)
-
-    table.string('email_verify_token', 40)
-      .nullable()
-      .defaultTo(null)
+      .unique()
 
     table.timestamp('email_verify_time')
       .nullable()

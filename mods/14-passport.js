@@ -1,4 +1,4 @@
-const passport = require('../utils/passport')
+const passport = require('../services/passport')
 
 module.exports = app => {
   app.use(passport.initialize())
