@@ -124,6 +124,7 @@ exports.findAllCharaInfo = async (chara, keys = null) => {
 }
 
 exports.insertInfo = async (chara, key, value) => {
+  // TODO Insert info yang sudah ada seharusnya tidak 500 (catch error pas insert)
   const countCharaInfo = await CharaInfo.countAllByChara(chara.id)
   if (countCharaInfo === MAX_CHARA_INFO_PER_CHARA) {
     throw new AppError('Limit reached', 'LIMIT')

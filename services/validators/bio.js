@@ -1,18 +1,16 @@
 const {default: ow} = require('ow')
 
+const BLOCK_TYPES = ['header', 'list', 'quote', 'simple-image', 'delimiter', 'paragraph']
+
 module.exports = {
   fn(value) {
     ow(value, ow.object.exactShape({
       version: ow.string,
       time: ow.number.positive.integer,
-      blocks: ow.array.ofType(ow.any(
-        ow.object.exactShape({
-          type: ow.string.equals('paragraph'),
-          data: ow.object.exactShape({
-            text: ow.string
-          })
-        })
-      ))
+      // TODO Block ini divalidasi
+      blocks: ow.array.ofType(ow.object.partialShape({
+        type: ow.string.oneOf(BLOCK_TYPES)
+      }))
     }))
   }
 }
