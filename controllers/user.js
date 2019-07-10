@@ -4,10 +4,10 @@ const {sendMailFromTemplate} = require('../services/mail')
 const User = require('../models/user')
 const {purify} = require('../services/purify')
 const db = require('../services/database')
-const {appBaseURL, baseURL} = require('../config/env')
+const {baseURL} = require('../config/env')
 
 function getResetPasswordURL(token) {
-  return `${appBaseURL}/auth/reset-password?token=${token}`
+  return `${process.env.APP_BASE_URL}/auth/reset-password?token=${token}`
 }
 
 function getVerifyEmailURL(token) {
