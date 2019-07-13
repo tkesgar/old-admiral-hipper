@@ -12,7 +12,7 @@ const IMAGE_INFO = {
       sm: {
         convert(sharpInstance) {
           return sharpInstance
-            .resize(50, 50)
+            .resize(10, 10)
             .jpeg()
         }
       }
@@ -22,7 +22,7 @@ const IMAGE_INFO = {
     ext: 'jpeg',
     convert(sharpInstance) {
       return sharpInstance
-        .resize(400, 600)
+        .resize(800, 1200)
         .jpeg()
     },
     variant: {
@@ -39,14 +39,14 @@ const IMAGE_INFO = {
     ext: 'png',
     convert(sharpInstance) {
       return sharpInstance
-        .resize(800, 800, {fit: 'contain', background: {r: 0, g: 0, b: 0, alpha: 0}})
+        .resize(1000, 1000, {fit: 'contain', background: {r: 0, g: 0, b: 0, alpha: 0}})
         .png()
     },
     variant: {
       sm: {
         convert(sharpInstance) {
           return sharpInstance
-            .resize(80, 80, {fit: 'contain', background: {r: 0, g: 0, b: 0, alpha: 0}})
+            .resize(50, 50, {fit: 'contain', background: {r: 0, g: 0, b: 0, alpha: 0}})
             .png()
         }
       }
