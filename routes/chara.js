@@ -9,6 +9,10 @@ function checkCharaOwner() {
   return checkAuth((user, req) => req.chara.userId === req.user.id)
 }
 
+function checkNotCharaOwner() {
+  return checkAuth((user, req) => req.chara.userId !== req.user.id)
+}
+
 const upload = multer({storage: multer.memoryStorage()})
 
 const route = router()
@@ -215,6 +219,32 @@ route.delete('/chara/:charaId/image/:imageType',
     const {image} = req
 
     await CharaController.deleteImage(image)
+  })
+)
+
+route.get('/chara/:charaId/like',
+  handle(async req => {
+    const {chara} = req
+
+    return CharaController.getCharaLikeData(chara)
+  })
+)
+
+route.post('/chara/:charaId/like',
+  checkNotCharaOwner(),
+  handle(async req => {
+    const {user, chara} = req
+
+    return CharaController.setCharaLike(chara, user)
+  })
+)
+
+route.delete('/chara/:charaId/like',
+  checkNotCharaOwner(),
+  handle(async req => {
+    const {user, chara} = req
+
+    return CharaController.setCharaUnlike(chara, user)
   })
 )
 

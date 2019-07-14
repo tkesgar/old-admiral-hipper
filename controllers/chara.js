@@ -321,3 +321,47 @@ exports.deleteImage = async image => {
     }))
   })
 }
+
+exports.findAllLikedByUser = async user => {
+  await Chara.findAll(function () {
+    this.whereIn('id', function () {
+      this.from('chara_like')
+        .where('user_id', user.id)
+        .select('chara_id')
+    })
+  })
+}
+
+const CharaLike = require('../models/chara-like')
+
+exports.getCharaLikeData = async chara => {
+  const count = await CharaLike.countAllByChara(chara.id)
+
+  // TODO Tambahin users: daftar user yang nge-like siapa aja.
+
+  return {count}
+}
+
+exports.setCharaLike = async (chara, user) => {
+  try {
+    await CharaLike.insert({
+      charaId: chara.id,
+      userId: user.id
+    })
+  } catch (error) {
+    if (error.code === 'ER_DUP_ENTRY' && error.sqlMessage.includes('chara_like_chara_id_user_id_unique')) {
+      return
+    }
+
+    throw error
+  }
+}
+
+exports.setCharaUnlike = async (chara, user) => {
+  const charaLike = await CharaLike.findByCharaUser(chara.id, user.id)
+  if (!charaLike) {
+    return
+  }
+
+  await charaLike.delete()
+}

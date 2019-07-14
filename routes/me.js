@@ -57,4 +57,10 @@ route.get('/me/chara', handle(async req => {
   return CharaController.findAllByUser(user)
 }))
 
+route.get('/me/chara/like', handle(async req => {
+  const {user} = req
+
+  return CharaController.findAllLikedByUser(user)
+}))
+
 module.exports = route
