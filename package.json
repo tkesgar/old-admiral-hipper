@@ -52,6 +52,9 @@
   "xo": {
     "space": 2,
     "semicolon": false,
+    "rules": {
+      "no-console": "error"
+    },
     "overrides": [
       {
         "files": "migrations/**",
