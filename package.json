@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "nodemon server.js",
-    "dev:files": "http-server ./.dev/files/uploads -p ${FILES_PORT:-3001} --cors -c-1",
+    "dev:files": "http-server ./.dev/files/uploads -p ${PORT:-3001} --cors -c-1",
     "lint": "xo",
     "knex": "knex"
   },
