@@ -338,12 +338,18 @@ exports.findAllLikedByUser = async user => {
 
 const CharaLike = require('../models/chara-like')
 
-exports.getCharaLikeData = async chara => {
-  const count = await CharaLike.countAllByChara(chara.id)
+exports.getCharaLikeData = async (chara, user = null) => {
+  const data = {}
+
+  data.count = await CharaLike.countAllByChara(chara.id)
+
+  if (user) {
+    data.isUserLike = Boolean(await CharaLike.findByCharaUser(chara.id, user.id))
+  }
 
   // TODO Tambahin users: daftar user yang nge-like siapa aja.
 
-  return {count}
+  return data
 }
 
 exports.setCharaLike = async (chara, user) => {

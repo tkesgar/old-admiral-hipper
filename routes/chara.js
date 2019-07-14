@@ -224,9 +224,9 @@ route.delete('/chara/:charaId/image/:imageType',
 
 route.get('/chara/:charaId/like',
   handle(async req => {
-    const {chara} = req
+    const {chara, user} = req
 
-    return CharaController.getCharaLikeData(chara)
+    return CharaController.getCharaLikeData(chara, user)
   })
 )
 
