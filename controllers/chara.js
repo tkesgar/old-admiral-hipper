@@ -323,13 +323,17 @@ exports.deleteImage = async image => {
 }
 
 exports.findAllLikedByUser = async user => {
-  await Chara.findAll(function () {
+  return (await Chara.findAll(function () {
     this.whereIn('id', function () {
       this.from('chara_like')
         .where('user_id', user.id)
         .select('chara_id')
     })
-  })
+  }))
+    .map(chara => ({
+      id: chara.id,
+      name: chara.name
+    }))
 }
 
 const CharaLike = require('../models/chara-like')
