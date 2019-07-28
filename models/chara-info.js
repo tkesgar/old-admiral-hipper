@@ -1,6 +1,6 @@
 const Row = require('../lib/knex-utils/row')
-const db = require('../services/database')
-const {CUSTOM_KEY_PREFIX} = require('../utils/chara-info')
+const db = require('../services/legacy-database')
+const {CUSTOM_KEY_PREFIX} = require('../utils/legacy-chara-info')
 
 const TABLE = 'chara_info'
 const TYPE_INTEGER = 'i'

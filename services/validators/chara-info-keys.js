@@ -1,5 +1,5 @@
 const {default: ow} = require('ow')
-const {GROUPS, ALLOWED_KEYS} = require('../../utils/chara-info')
+const {GROUPS, ALLOWED_KEYS} = require('../../utils/legacy-chara-info')
 
 module.exports = {
   fn(value) {

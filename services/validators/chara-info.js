@@ -5,7 +5,7 @@ const {
   VALIDATORS,
   STRINGABLE_KEYS,
   ALLOWED_KEYS
-} = require('../../utils/chara-info')
+} = require('../../utils/legacy-chara-info')
 
 module.exports = {
   fn({key, value}) {

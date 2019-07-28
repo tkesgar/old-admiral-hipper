@@ -1,12 +1,12 @@
 const requireAll = require('../lib/require-all')
 
-const validators = requireAll('./services/validators')
+const validators = requireAll('./services/legacy-validators')
   .reduce((validators, [name, validator]) => {
     validators[name] = validator
     return validators
   }, {})
 
-const sanitizers = requireAll('./services/sanitizers')
+const sanitizers = requireAll('./services/legacy-sanitizers')
   .reduce((sanitizers, [name, sanitizer]) => {
     sanitizers[name] = sanitizer
     return sanitizers

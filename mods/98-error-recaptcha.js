@@ -1,4 +1,4 @@
-const log = require('../services/log')
+const log = require('../services/legacy-log')
 const {RecaptchaError} = require('../lib/check-recaptcha')
 
 module.exports = app => {

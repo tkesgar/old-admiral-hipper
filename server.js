@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 const createApp = require('./lib/create-app')
-const log = require('./services/log')
+const log = require('./services/legacy-log')
 
 const app = createApp()
 

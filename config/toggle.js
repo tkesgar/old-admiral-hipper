@@ -1,6 +1,6 @@
 const fs = require('fs')
 const path = require('path')
-const log = require('../services/log')
+const log = require('../services/legacy-log')
 
 const toggle = {
   register: true,

@@ -3,12 +3,12 @@ const Chara = require('../models/chara')
 const CharaInfo = require('../models/chara-info')
 const CharaFile = require('../models/chara-file')
 const File = require('../models/file')
-const db = require('../services/database')
-const {purify} = require('../services/purify')
-const {AppError} = require('../utils/error')
-const FileIO = require('../services/file-io')
-const {convert} = require('../services/image')
-const {getInfoGroupKeys, getInfoGroupFromKey, GROUPS} = require('../utils/chara-info')
+const db = require('../services/legacy-database')
+const {purify} = require('../services/legacy-purify')
+const {AppError} = require('../utils/legacy-error')
+const FileIO = require('../services/legacy-file-io')
+const {convert} = require('../services/legacy-image')
+const {getInfoGroupKeys, getInfoGroupFromKey, GROUPS} = require('../utils/legacy-chara-info')
 const {
   MAX_CHARA_INFO_PER_CHARA,
   MAX_CHARA_FILE_PER_CHARA,

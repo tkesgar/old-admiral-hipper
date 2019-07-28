@@ -1,5 +1,5 @@
 const Row = require('../lib/knex-utils/row')
-const db = require('../services/database')
+const db = require('../services/legacy-database')
 
 const TABLE = 'chara_file'
 

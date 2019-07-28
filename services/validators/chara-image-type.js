@@ -1,5 +1,5 @@
 const {default: ow} = require('ow')
-const {IMAGE_TYPES} = require('../image')
+const {IMAGE_TYPES} = require('../legacy-image')
 
 module.exports = {
   fn(value) {

@@ -1,7 +1,7 @@
 const {Router: router} = require('express')
 const UserController = require('../controllers/user')
 const handle = require('../middlewares/handle')
-const passport = require('../services/passport')
+const passport = require('../services/legacy-passport')
 const toggle = require('../config/toggle')
 const toggleRoute = require('../middlewares/toggle-route')
 const {appCallbackURL} = require('../config/env')
