@@ -1,6 +1,4 @@
-const loadEnv = require('./lib/load-env')
-
-loadEnv()
+require('./utils/env').loadEnv()
 
 module.exports = {
   client: 'mysql',
