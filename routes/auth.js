@@ -2,7 +2,7 @@ const {Router: router} = require('express')
 const UserController = require('../controllers/user')
 const handle = require('../utils/middlewares/handle')
 const passport = require('../services/legacy-passport')
-const toggle = require('../utils/middlewares/toggle')
+const toggleRoute = require('../utils/middlewares/toggle')
 const {getAppCallbackURL} = require('../utils/env')
 const recaptcha = require('../utils/middlewares/recaptcha')
 
@@ -60,7 +60,7 @@ route.get('/auth/verify-email', handle(async (req, res) => {
 }))
 
 route.post('/auth/register',
-  toggle('register'),
+  toggleRoute('register'),
   recaptcha(),
   handle(async req => {
     const {body: {email, password}} = req
