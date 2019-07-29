@@ -1,7 +1,7 @@
 require('./utils/env').loadEnv()
 
 const createApp = require('./utils/app')
-const log = require('./services/legacy-log')
+const log = require('./utils/log')
 
 const app = createApp()
 

@@ -1,9 +1,9 @@
-const log = require('../services/legacy-log')
+const log = require('../utils/log')
 const {AppError} = require('../utils/legacy-error')
 const {sendMailFromTemplate} = require('../services/legacy-mail')
 const User = require('../models/user')
 const {purify} = require('../services/legacy-purify')
-const db = require('../services/legacy-database')
+const db = require('../utils/db')
 const {getBaseURL} = require('../utils/env')
 
 function getResetPasswordURL(token) {

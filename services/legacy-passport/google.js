@@ -1,7 +1,7 @@
 const {Strategy} = require('passport-google-oauth20')
 const {getBaseURL} = require('../../utils/env')
 const User = require('../../models/user')
-const log = require('../legacy-log')
+const log = require('../../utils/log')
 
 module.exports = new Strategy(
   {

@@ -1,6 +1,6 @@
 const crypto = require('crypto')
 const Row = require('../utils/legacy-knex-utils/row')
-const db = require('../services/legacy-database')
+const db = require('../utils/db')
 
 const TABLE = 'file'
 

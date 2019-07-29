@@ -1,4 +1,4 @@
-const log = require('../services/legacy-log')
+const log = require('../utils/log')
 
 module.exports = app => {
   app.use((req, res) => {
