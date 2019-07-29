@@ -1,0 +1,10 @@
+extends ../layouts/email.pug
+
+block content
+  p Halo #{displayName},
+  p Anda baru saja meminta verifikasi alamat email akun CharaDB anda.
+  p
+    | Silakan klik tautan ini untuk menyelesaikan verifikasi alamat email akun CharaDB Anda: #[br]
+    | #[a(href=link)= link]
+  p Jika Anda tidak merasa melakukan hal ini, silakan meminta bantuan kepada staf CharaDB.
+  p: i CharaDB

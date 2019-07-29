@@ -17,7 +17,6 @@
     "cors": "^2.8.5",
     "csurf": "^1.10.0",
     "dotenv": "^8.0.0",
-    "ejs": "^2.6.1",
     "express": "^4.16.4",
     "got": "^9.6.0",
     "helmet": "^3.18.0",
@@ -33,7 +32,6 @@
     "passport": "^0.4.0",
     "passport-google-oauth20": "^2.0.0",
     "pino": "^5.12.6",
-    "pino-pretty": "^3.1.0",
     "pug": "^2.0.4",
     "sanitize-html": "^1.20.1",
     "sharp": "^0.22.1",
@@ -43,6 +41,7 @@
     "http-server": "^0.11.1",
     "husky": "^3.0.0",
     "nodemon": "^1.19.1",
+    "pino-pretty": "^3.1.0",
     "xo": "^0.24.0"
   },
   "husky": {
