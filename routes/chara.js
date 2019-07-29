@@ -2,15 +2,15 @@ const {default: ow} = require('ow')
 const multer = require('multer')
 const {Router: router} = require('express')
 const CharaController = require('../controllers/chara')
-const checkAuth = require('../middlewares/check-auth')
-const handle = require('../middlewares/handle')
+const checkUser = require('../utils/middlewares/check-user')
+const handle = require('../utils/middlewares/handle')
 
 function checkCharaOwner() {
-  return checkAuth((user, req) => req.chara.userId === req.user.id)
+  return checkUser((user, req) => req.chara.userId === req.user.id)
 }
 
 function checkNotCharaOwner() {
-  return checkAuth((user, req) => req.chara.userId !== req.user.id)
+  return checkUser((user, req) => req.chara.userId !== req.user.id)
 }
 
 const upload = multer({storage: multer.memoryStorage()})
@@ -21,7 +21,7 @@ const route = router()
 route.get('/chara', handle(501))
 
 route.post('/chara',
-  checkAuth(),
+  checkUser(),
   handle(async (req, res) => {
     const {user, body: {name, bio, info}} = req
 

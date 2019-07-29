@@ -10,7 +10,7 @@ module.exports = (userFn = null) => (req, res, next) => {
     return
   }
 
-  if (userFn && !userFn(user)) {
+  if (userFn && !userFn(user, req)) {
     next(new FailError('UNAUTHORIZED', {
       message: 'Unauthorized',
       statusCode: 403

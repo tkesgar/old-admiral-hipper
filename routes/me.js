@@ -1,12 +1,12 @@
 const {Router: router} = require('express')
 const CharaController = require('../controllers/chara')
 const UserController = require('../controllers/user')
-const checkAuth = require('../middlewares/check-auth')
-const handle = require('../middlewares/handle')
+const checkUser = require('../utils/middlewares/check-user')
+const handle = require('../utils/middlewares/handle')
 
 const route = router()
 
-route.use('/me', checkAuth())
+route.use('/me', checkUser())
 
 route.get('/me', (req, res) => {
   const {user} = req

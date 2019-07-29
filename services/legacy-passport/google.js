@@ -1,5 +1,5 @@
 const {Strategy} = require('passport-google-oauth20')
-const {baseURL} = require('../../config/env')
+const {getBaseURL} = require('../../utils/env')
 const User = require('../../models/user')
 const log = require('../legacy-log')
 
@@ -7,7 +7,7 @@ module.exports = new Strategy(
   {
     clientID: process.env.AUTH_GOOGLE_ID,
     clientSecret: process.env.AUTH_GOOGLE_SECRET,
-    callbackURL: `${baseURL}/auth/google/_callback`,
+    callbackURL: `${getBaseURL()}/auth/google/_callback`,
     scope: ['email', 'profile'],
     passReqToCallback: true
   },

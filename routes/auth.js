@@ -1,11 +1,11 @@
 const {Router: router} = require('express')
 const UserController = require('../controllers/user')
-const handle = require('../middlewares/handle')
+const handle = require('../utils/middlewares/handle')
 const passport = require('../services/legacy-passport')
 const toggle = require('../config/toggle')
-const toggleRoute = require('../middlewares/toggle-route')
-const {appCallbackURL} = require('../config/env')
-const {checkRecaptcha} = require('../lib/check-recaptcha')
+const toggleRoute = require('../utils/middlewares/legacy-toggle-route')
+const {getAppCallbackURL} = require('../utils/env')
+const recaptcha = require('../utils/middlewares/recaptcha')
 
 const authGoogle = () => passport.authenticate('google')
 
@@ -36,7 +36,7 @@ route.post('/auth/login', handle(async (req, res) => {
 route.get('/auth/logout', handle(req => req.logout()))
 
 route.post('/auth/recover',
-  checkRecaptcha(),
+  recaptcha(),
   handle(async req => {
     const {body: {email}} = req
 
@@ -56,13 +56,13 @@ route.get('/auth/verify-email', handle(async (req, res) => {
   await UserController.verifyEmail(token)
 
   if (typeof app !== 'undefined') {
-    res.redirect(`${appCallbackURL}?info=verify_email_success`)
+    res.redirect(`${getAppCallbackURL()}?info=verify_email_success`)
   }
 }))
 
 route.post('/auth/register',
   toggleRoute(toggle.register),
-  checkRecaptcha(),
+  recaptcha(),
   handle(async req => {
     const {body: {email, password}} = req
 
@@ -74,7 +74,7 @@ route.get('/auth/google', authGoogle())
 
 route.get('/auth/google/_callback',
   authGoogle(),
-  (req, res) => res.redirect(`${appCallbackURL}?action=auth`)
+  (req, res) => res.redirect(`${getAppCallbackURL()}?action=auth`)
 )
 
 module.exports = route

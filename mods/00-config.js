@@ -1,6 +1,6 @@
 const upash = require('upash')
 const pbkdf2 = require('@phc/pbkdf2')
-const {env} = require('../config/env')
+const {getEnv} = require('../utils/env')
 
 module.exports = app => {
   if (!upash.list().includes('pbkdf2')) {
@@ -8,6 +8,6 @@ module.exports = app => {
   }
 
   app.set('view engine', 'ejs')
-  app.set('env', env)
+  app.set('env', getEnv())
   app.set('trust proxy', JSON.parse(process.env.TRUST_PROXY))
 }

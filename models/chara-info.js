@@ -1,4 +1,4 @@
-const Row = require('../lib/knex-utils/row')
+const Row = require('../utils/legacy-knex-utils/row')
 const db = require('../services/legacy-database')
 const {CUSTOM_KEY_PREFIX} = require('../utils/legacy-chara-info')
 

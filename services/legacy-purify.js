@@ -1,4 +1,4 @@
-const requireAll = require('../lib/require-all')
+const requireAll = require('../utils/require-all')
 
 const validators = requireAll('./services/legacy-validators')
   .reduce((validators, [name, validator]) => {

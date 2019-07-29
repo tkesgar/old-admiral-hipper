@@ -7,9 +7,7 @@ class RecaptchaError extends Error {
   }
 }
 
-exports.RecaptchaError = RecaptchaError
-
-function checkRecaptcha(opts = {}) {
+function recaptcha(opts = {}) {
   const {
     secret = process.env.RECAPTCHA_SECRET_KEY,
     token: tokenFn = req => req.body.recaptchaToken,
@@ -39,4 +37,6 @@ function checkRecaptcha(opts = {}) {
   }
 }
 
-exports.checkRecaptcha = checkRecaptcha
+recaptcha.RecaptchaError = RecaptchaError
+
+module.exports = recaptcha

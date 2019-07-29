@@ -1,8 +1,8 @@
 const upash = require('upash')
 const moment = require('moment')
-const Row = require('../lib/knex-utils/row')
+const Row = require('../utils/legacy-knex-utils/row')
 const db = require('../services/legacy-database')
-const generateToken = require('../lib/token')
+const generateToken = require('../utils/token')
 
 const TABLE = 'user'
 

@@ -36,3 +36,27 @@ function isProduction() {
 }
 
 exports.isProduction = isProduction
+
+function getBaseURL() {
+  return process.env.BASE_URL || `localhost:${process.env.PORT}`
+}
+
+exports.getBaseURL = getBaseURL
+
+function getAppBaseURL() {
+  return process.env.APP_BASE_URL || 'localhost:8080'
+}
+
+exports.getAppBaseURL = getAppBaseURL
+
+function getAppCallbackURL() {
+  return `${getAppBaseURL()}/_callback`
+}
+
+exports.getAppCallbackURL = getAppCallbackURL
+
+function getFileUploadDirPath() {
+  return path.resolve(process.env.FILE_UPLOAD_DIR)
+}
+
+exports.getFileUploadDirPath = getFileUploadDirPath

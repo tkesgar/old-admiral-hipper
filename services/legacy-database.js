@@ -1,5 +1,5 @@
 const knex = require('knex')
-const {dev} = require('../config/env')
+const {isDev} = require('../utils/env')
 
 module.exports = knex({
   client: 'mysql',
@@ -11,5 +11,5 @@ module.exports = knex({
     database: process.env.MYSQL_NAME,
     charset: 'utf8mb4'
   },
-  asyncStackTrace: dev
+  asyncStackTrace: isDev()
 })

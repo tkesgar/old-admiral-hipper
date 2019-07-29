@@ -4,14 +4,14 @@ const {sendMailFromTemplate} = require('../services/legacy-mail')
 const User = require('../models/user')
 const {purify} = require('../services/legacy-purify')
 const db = require('../services/legacy-database')
-const {baseURL} = require('../config/env')
+const {getBaseURL} = require('../utils/env')
 
 function getResetPasswordURL(token) {
   return `${process.env.APP_BASE_URL}/auth/reset-password?token=${token}`
 }
 
 function getVerifyEmailURL(token) {
-  return `${baseURL}/auth/verify-email?token=${token}&app`
+  return `${getBaseURL()}/auth/verify-email?token=${token}&app`
 }
 
 exports.getUserData = user => {
