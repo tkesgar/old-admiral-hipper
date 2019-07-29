@@ -5,7 +5,7 @@ const CharaFile = require('../models/chara-file')
 const File = require('../models/file')
 const db = require('../utils/db')
 const {purify} = require('../services/legacy-purify')
-const {AppError} = require('../utils/legacy-error')
+const err = require('../utils/error')
 const FileIO = require('../services/legacy-file-io')
 const {convert} = require('../services/legacy-image')
 const {getInfoGroupKeys, getInfoGroupFromKey, GROUPS} = require('../utils/legacy-chara-info')
@@ -51,7 +51,10 @@ exports.insertChara = async (user, name, bio = null, info = null) => {
   } catch (error) {
     if (error.code === 'ER_DUP_ENTRY') {
       if (error.sqlMessage.includes('chara_name_unique')) {
-        throw new AppError('Chara name is already used', 'NAME_EXIST', {name})
+        throw new err.FailError('NAME_EXIST', {
+          message: 'Chara name is already used',
+          data: {name}
+        })
       }
     }
   }
@@ -173,7 +176,10 @@ exports.updateInfo = async (charaInfo, value) => {
 exports.deleteInfo = async charaInfo => {
   const infoGroup = getInfoGroupKeys(charaInfo.key)
   if (infoGroup) {
-    throw new AppError('Info must be removed as group', 'INFO_GROUP', {group: infoGroup})
+    throw new err.FailError('INFO_GROUP', {
+      message: 'Info must be removed as group',
+      data: {group: infoGroup}
+    })
   }
 
   await charaInfo.delete()

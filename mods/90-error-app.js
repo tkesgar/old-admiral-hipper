@@ -1,16 +1,14 @@
 const log = require('../utils/log')
+const {AppError} = require('../utils/error')
 
 module.exports = app => {
   app.use((err, req, res, next) => {
-    if (err.name === 'AppError') {
-      const statusCode = err.origin === 'user' ? 400 : 500
+    if (err instanceof AppError) {
+      if (err.level) {
+        log[err.level]({err})
+      }
 
-      log.debug({err})
-      res.status(statusCode).json({
-        message: err.message,
-        code: err.code,
-        data: err.data
-      })
+      res.status(err.statusCode).json(err)
       return
     }
 

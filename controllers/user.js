@@ -1,5 +1,5 @@
 const log = require('../utils/log')
-const {AppError} = require('../utils/legacy-error')
+const err = require('../utils/error')
 const MailService = require('../services/mail')
 const User = require('../models/user')
 const {purify} = require('../services/legacy-purify')
@@ -49,12 +49,17 @@ exports.deleteDisplayName = async user => {
 exports.setPassword = async (user, password, newPassword) => {
   if (user.hasPassword) {
     if (password === newPassword) {
-      throw new AppError('Same password', 'SAME_PASSWORD')
+      throw new err.FailError('SAME_PASSWORD', {
+        message: 'Password is same'
+      })
     }
 
     const match = await user.testPassword(password)
     if (!match) {
-      throw new AppError('Invalid password', 'INVALID_PASSWORD')
+      throw new err.FailError('INVALID_PASSWORD', {
+        message: 'Invalid password',
+        statusCode: 401
+      })
     }
   }
 
@@ -82,11 +87,16 @@ exports.authenticate = async (email, password) => {
 exports.sendResetPasswordToken = async email => {
   const user = await User.findByEmail(email)
   if (!user || !user.isEmailVerified) {
-    throw new AppError('User does not exist', 'NO_USER')
+    throw new err.FailError('NO_USER', {
+      message: 'User does not exist',
+      statusCode: 401
+    })
   }
 
   if (user.recoverPasswordToken) {
-    throw new AppError('Token already exists', 'TOKEN_EXIST')
+    throw new err.FailError('TOKEN_EXIST', {
+      message: 'Token already exists'
+    })
   }
 
   const token = await user.generateRecoverPasswordToken()
@@ -102,11 +112,15 @@ exports.sendResetPasswordToken = async email => {
 
 exports.sendVerifyEmailToken = async user => {
   if (user.isEmailVerified) {
-    throw new AppError('Email has been verified', 'EMAIL_VERIFIED')
+    throw new err.FailError('EMAIL_VERIFIED', {
+      message: 'Email has been verified'
+    })
   }
 
   if (user.verifyEmailToken) {
-    throw new AppError('Token already exists', 'TOKEN_EXIST')
+    throw new err.FailError('TOKEN_EXIST', {
+      message: 'Token already exists'
+    })
   }
 
   const token = await user.generateEmailVerifyToken()
@@ -125,7 +139,9 @@ exports.resetPassword = async (token, newPassword) => {
     // eslint-disable-next-line camelcase
     const user = await User.find({reset_password_token: token}, trx)
     if (!user) {
-      throw new AppError('Invalid token', 'INVALID_TOKEN')
+      throw new err.FailError('INVALID_TOKEN', {
+        message: 'Invalid token'
+      })
     }
 
     await user.clearRecoverPasswordToken()
@@ -139,16 +155,23 @@ exports.verifyEmail = async token => {
     const user = await User.find({email_verify_token: token}, trx)
 
     if (!user) {
-      throw new AppError('User does not exist', 'NO_USER')
+      throw new err.FailError('NO_USER', {
+        message: 'User does not exist',
+        statusCode: 401
+      })
     }
 
     const userToken = user.emailVerifyToken
     if (!userToken) {
-      throw new AppError('Token does not exist or has expired', 'NO_TOKEN')
+      throw new err.FailError('NO_TOKEN', {
+        message: 'Token does not exist or has expired'
+      })
     }
 
     if (token !== userToken) {
-      throw new AppError('Invalid token', 'INVALID_TOKEN')
+      throw new err.FailError('INVALID_TOKEN', {
+        message: 'Invalid token'
+      })
     }
 
     await user.clearEmailVerifyToken()
@@ -161,6 +184,7 @@ exports.register = async (email, password, displayName = null) => {
   await purify(password, 'password')
   await purify(displayName, 'display-name')
 
+  // TODO Ini diganti dengan check di awal supaya nggak ngehabisin primary key
   try {
     await User.insert({
       email,
@@ -170,7 +194,9 @@ exports.register = async (email, password, displayName = null) => {
   } catch (error) {
     if (error.code === 'ER_DUP_ENTRY') {
       if (error.sqlMessage.includes('user_email_unique')) {
-        throw new AppError('Email address is already registered', 'EMAIL_EXIST', {email})
+        throw new err.FailError('EMAIL_EXIST', {
+          message: 'Email address has been already registered'
+        })
       }
     }
   }
