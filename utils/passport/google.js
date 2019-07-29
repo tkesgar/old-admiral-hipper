@@ -1,6 +1,5 @@
 const {Strategy} = require('passport-google-oauth20')
-
-const UserService = {} // FIXME require('../../services/user')
+const UserService = require('../../services/user')
 
 const {
   AUTH_GOOGLE_ID,

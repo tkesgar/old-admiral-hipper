@@ -1,7 +1,6 @@
 const {Passport} = require('passport')
+const UserService = require('../../services/user')
 const {strategy: googleStrategy} = require('./google')
-
-const UserService = {} // FIXME require('../../services/user')
 
 const passport = new Passport()
 

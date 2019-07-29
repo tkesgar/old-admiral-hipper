@@ -1,4 +1,4 @@
-const passport = require('../services/legacy-passport')
+const {passport} = require('../utils/passport')
 
 module.exports = app => {
   app.use(passport.initialize())
