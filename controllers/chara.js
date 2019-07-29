@@ -9,11 +9,7 @@ const {AppError} = require('../utils/legacy-error')
 const FileIO = require('../services/legacy-file-io')
 const {convert} = require('../services/legacy-image')
 const {getInfoGroupKeys, getInfoGroupFromKey, GROUPS} = require('../utils/legacy-chara-info')
-const {
-  MAX_CHARA_INFO_PER_CHARA,
-  MAX_CHARA_FILE_PER_CHARA,
-  MAX_CHARA_PER_USER
-} = require('../config/limits')
+const LimiterService = require('../services/limiter')
 
 exports.findAllByUser = async user => {
   return (await Chara.findAllByUser(user.id)).map(chara => ({
@@ -24,10 +20,7 @@ exports.findAllByUser = async user => {
 }
 
 exports.insertChara = async (user, name, bio = null, info = null) => {
-  const countChara = await Chara.countAllByUser(user.id)
-  if (countChara === MAX_CHARA_PER_USER) {
-    throw new AppError('Limit reached', 'LIMIT')
-  }
+  await LimiterService.limitMaxCharaPerUser(user.id)
 
   await purify(name, 'name')
 
@@ -124,11 +117,7 @@ exports.findAllCharaInfo = async (chara, keys = null) => {
 }
 
 exports.insertInfo = async (chara, key, value) => {
-  // TODO Insert info yang sudah ada seharusnya tidak 500 (catch error pas insert)
-  const countCharaInfo = await CharaInfo.countAllByChara(chara.id)
-  if (countCharaInfo === MAX_CHARA_INFO_PER_CHARA) {
-    throw new AppError('Limit reached', 'LIMIT')
-  }
+  await LimiterService.limitMaxInfoPerChara(chara.id)
 
   await purify({key, value}, 'chara-info')
 
@@ -136,6 +125,8 @@ exports.insertInfo = async (chara, key, value) => {
 }
 
 exports.insertManyInfo = async (chara, manyInfo) => {
+  await LimiterService.limitMaxInfoPerChara(chara.id, Object.entries(manyInfo).length)
+
   await Promise.all(Object.entries(manyInfo).map(([key, value]) => purify({key, value}, 'chara-info')))
   await purify(manyInfo, 'chara-info-entries')
 
@@ -220,10 +211,7 @@ exports.findAllImage = async chara => {
 }
 
 exports.insertImage = async (chara, type, buffer) => {
-  const countCharaFile = await CharaFile.countAllByChara(chara.id)
-  if (countCharaFile === MAX_CHARA_FILE_PER_CHARA) {
-    throw new AppError('Limit reached', 'LIMIT')
-  }
+  await LimiterService.limitMaxFilePerChara(chara.id)
 
   await purify(type, 'chara-image-type')
 

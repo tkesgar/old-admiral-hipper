@@ -21,6 +21,6 @@ exports.toggle = loadConfig('toggle', {
 
 exports.limits = loadConfig('limits', {
   maxCharaPerUser: 5,
-  maxInfoTypePerChara: 100,
-  maxFileTypePerChara: 10
+  maxInfoPerChara: 100,
+  maxFilePerChara: 10
 })

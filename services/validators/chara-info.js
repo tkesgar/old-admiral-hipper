@@ -1,5 +1,6 @@
 const {default: ow} = require('ow')
-const toggle = require('../../config/toggle')
+const ToggleService = require('../../services/toggle')
+
 const {
   CUSTOM_KEY_PREFIX,
   VALIDATORS,
@@ -15,11 +16,7 @@ module.exports = {
     ))
 
     if (key.startsWith(CUSTOM_KEY_PREFIX)) {
-      if (toggle.customCharaInfo) {
-        return
-      }
-
-      throw new Error('Custom key is not allowed')
+      ToggleService.checkToggle('customCharaInfo')
     }
 
     if (STRINGABLE_KEYS.includes(key)) {
