@@ -1,6 +1,6 @@
 const log = require('../utils/log')
 const {AppError} = require('../utils/legacy-error')
-const {sendMailFromTemplate} = require('../services/legacy-mail')
+const MailService = require('../services/mail')
 const User = require('../models/user')
 const {purify} = require('../services/legacy-purify')
 const db = require('../utils/db')
@@ -91,7 +91,7 @@ exports.sendResetPasswordToken = async email => {
 
   const token = await user.generateRecoverPasswordToken()
 
-  const info = await sendMailFromTemplate(email, 'forgot-password', {
+  const info = await MailService.sendMail(email, 'forgot-password', {
     title: 'Account password recovery',
     displayName: user.displayName,
     link: getResetPasswordURL(token)
@@ -111,7 +111,7 @@ exports.sendVerifyEmailToken = async user => {
 
   const token = await user.generateEmailVerifyToken()
 
-  const info = await sendMailFromTemplate(user.email, 'verify-email', {
+  const info = await MailService.sendMail(user.email, 'verify-email', {
     title: 'Verify email',
     displayName: user.displayName,
     link: getVerifyEmailURL(token)
