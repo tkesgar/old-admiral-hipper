@@ -3,17 +3,17 @@ class Row {
     return conn(table)
   }
 
-  static async find(conn, table, where, map = row => new Row(conn, table, row)) {
-    const [row] = await Row.createQuery(conn, table).where(where)
-    if (!row) {
-      return null
-    }
+  static async findAll(conn, table, where, map = row => new Row(conn, table, row)) {
+    return Row.createQuery(conn, table).where(where).map(map)
+  }
 
-    return map ? map(row) : row
+  static async find(conn, table, where, map = row => new Row(conn, table, row)) {
+    const [result] = await Row.findAll(conn, table, where, map)
+    return result || null
   }
 
   static async insert(conn, table, data) {
-    const [id] = await conn(table).insert(data)
+    const [id] = await Row.createQuery(conn, table).insert(data)
     return id
   }
 

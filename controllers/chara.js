@@ -91,7 +91,7 @@ exports.deleteCharaBio = async chara => {
 
 exports.deleteChara = async chara => {
   await db.transaction(async trx => {
-    chara.setConnection(trx)
+    chara.connection = trx
 
     const files = await File.findAll(function () {
       this.whereIn('id', function () {
@@ -107,7 +107,7 @@ exports.deleteChara = async chara => {
 
     await Promise.all(files.map(file => new FileIO(file).delete()))
 
-    chara.setConnection(null)
+    chara.connection = null
   })
 }
 
@@ -285,7 +285,7 @@ exports.updateImage = async (image, buffer) => {
 
   await db.transaction(async trx => {
     await Promise.all(Object.values(image).map(async ({charaFile, file}) => {
-      file.setConnection(trx)
+      file.connection = trx
 
       const {type, variant} = charaFile
       const {ext, buffer: imageBuffer} = await convert(sharpInstance, type, variant)
@@ -298,7 +298,7 @@ exports.updateImage = async (image, buffer) => {
 
       await new FileIO(file).write(imageBuffer)
 
-      file.setConnection(null)
+      file.connection = null
     }))
   })
 }
@@ -306,12 +306,12 @@ exports.updateImage = async (image, buffer) => {
 exports.deleteImage = async image => {
   await db.transaction(async trx => {
     await Promise.all(Object.values(image).map(async ({file}) => {
-      file.setConnection(trx)
+      file.connection = trx
 
       await file.delete()
       new FileIO(file).delete()
 
-      file.setConnection(null)
+      file.connection = null
     }))
   })
 }

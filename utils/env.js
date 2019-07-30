@@ -13,8 +13,23 @@ function loadEnv(dir = './env') {
 
 exports.loadEnv = loadEnv
 
+function getValue(name, defaultValue) {
+  const value = process.env[name]
+  if (typeof value === 'undefined') {
+    if (typeof defaultValue === 'undefined') {
+      throw new TypeError(`Environment variable does not exist: ${name}`)
+    }
+
+    return defaultValue
+  }
+
+  return value
+}
+
+exports.getValue = getValue
+
 function getEnv() {
-  return process.env.NODE_ENV || 'development'
+  return getValue('NODE_ENV', 'development')
 }
 
 exports.getEnv = getEnv
@@ -38,13 +53,13 @@ function isProduction() {
 exports.isProduction = isProduction
 
 function getBaseURL() {
-  return process.env.BASE_URL || `localhost:${process.env.PORT}`
+  return getValue('BASE_URL', `http://localhost:${getValue('PORT')}`)
 }
 
 exports.getBaseURL = getBaseURL
 
 function getAppBaseURL() {
-  return process.env.APP_BASE_URL || 'localhost:8080'
+  return getValue('APP_BASE_URL', 'http://localhost:8080')
 }
 
 exports.getAppBaseURL = getAppBaseURL
@@ -56,7 +71,7 @@ function getAppCallbackURL() {
 exports.getAppCallbackURL = getAppCallbackURL
 
 function getFileUploadDirPath() {
-  return path.resolve(process.env.FILE_UPLOAD_DIR)
+  return path.resolve(getValue('FILE_UPLOAD_DIR'))
 }
 
 exports.getFileUploadDirPath = getFileUploadDirPath

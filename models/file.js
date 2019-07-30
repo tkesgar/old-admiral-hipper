@@ -1,5 +1,5 @@
 const crypto = require('crypto')
-const Row = require('../utils/legacy-knex-utils/row')
+const Row = require('../utils/row')
 const db = require('../utils/db')
 
 const TABLE = 'file'
@@ -10,13 +10,33 @@ function getRandom() {
   return rand + ts
 }
 
+function mapInsert(data) {
+  const {
+    userId,
+    ext,
+    rand = getRandom()
+  } = data
+
+  return {
+    /* eslint-disable camelcase */
+    user_id: userId,
+    ext,
+    rand
+    /* eslint-enable camelcase */
+  }
+}
+
 class File extends Row {
+  static createQuery(conn = db) {
+    return Row.createQuery(conn, TABLE)
+  }
+
   static async findAll(where, conn = db) {
-    return Row.findAll(TABLE, where, row => new File(row, conn), conn)
+    return Row.findAll(conn, TABLE, where, row => new File(row, conn))
   }
 
   static async find(where, conn = db) {
-    return Row.find(TABLE, where, row => new File(row, conn), conn)
+    return Row.find(conn, TABLE, where, row => new File(row, conn))
   }
 
   static async findById(id, conn = db) {
@@ -24,75 +44,41 @@ class File extends Row {
   }
 
   static async insert(data, conn = db) {
-    const {
-      userId,
-      ext,
-      rand = getRandom()
-    } = data
-
-    const [id] = await conn(TABLE).insert({
-      /* eslint-disable camelcase */
-      user_id: userId,
-      ext,
-      rand
-      /* eslint-enable camelcase */
-    })
-
-    return id
+    return Row.insert(conn, TABLE, mapInsert(data))
   }
 
-  static async insertMany(manyData, conn = db) {
-    await conn(TABLE).insert(manyData.map(data => {
-      const {
-        userId,
-        ext,
-        rand = getRandom()
-      } = data
-
-      return {
-        /* eslint-disable camelcase */
-        user_id: userId,
-        ext,
-        rand
-        /* eslint-enable camelcase */
-      }
-    }))
+  static async insertMany(dataArray, conn = db) {
+    await Row.insert(conn, TABLE, dataArray.map(File.mapInsert))
   }
 
-  static async deleteMany(fileIds, conn = db) {
-    await conn(TABLE).whereIn('id', fileIds).delete()
+  static async deleteMany(ids, conn = db) {
+    await File.createQuery(conn)
+      .whereIn('id', ids)
+      .delete()
   }
 
   constructor(row, conn = db) {
-    super(TABLE, row, conn)
-  }
-
-  get userId() {
-    return this.getColumn('user_id')
+    super(conn, TABLE, row)
   }
 
   get rand() {
     return this.getColumn('rand')
   }
 
-  get ext() {
-    return this.getColumn('ext')
-  }
-
-  get name() {
-    return `${this.rand}.${this.ext}`
-  }
-
   async setRand(rand = getRandom()) {
     await this.setColumn('rand', rand)
   }
 
-  async setUserId(userId) {
-    await this.setColumn('user_id', userId)
+  get ext() {
+    return this.getColumn('ext')
   }
 
   async setExt(ext) {
     await this.setColumn('ext', ext)
+  }
+
+  get name() {
+    return `${this.rand}.${this.ext}`
   }
 }
 

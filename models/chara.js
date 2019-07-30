@@ -1,15 +1,19 @@
-const Row = require('../utils/legacy-knex-utils/row')
+const Row = require('../utils/row')
 const db = require('../utils/db')
 
 const TABLE = 'chara'
 
 class Chara extends Row {
+  static createQuery(conn = db) {
+    return Row.createQuery(conn, TABLE)
+  }
+
   static async findAll(where, conn = db) {
-    return Row.findAll(TABLE, where, row => new Chara(row, conn), conn)
+    return Row.findAll(conn, TABLE, where, row => new Chara(row, conn))
   }
 
   static async find(where, conn = db) {
-    return Row.find(TABLE, where, row => new Chara(row, conn), conn)
+    return Row.find(conn, TABLE, where, row => new Chara(row, conn))
   }
 
   static async findById(id, conn = db) {
@@ -26,7 +30,10 @@ class Chara extends Row {
   }
 
   static async countAllByUser(userId, conn = db) {
-    const [{'count(*)': count}] = await conn(TABLE).where('user_id', userId).count()
+    const [{'count(*)': count}] = await Chara.createQuery(conn)
+      .where('user_id', userId)
+      .count()
+
     return count
   }
 
@@ -37,21 +44,17 @@ class Chara extends Row {
       bio = null
     } = data
 
-    // TODO Handle error kalau nama chara sudah dipakai
-
-    const [id] = await conn(TABLE).insert({
+    return Row.insert(conn, TABLE, {
       /* eslint-disable camelcase */
       user_id: userId,
       name,
       bio: bio ? JSON.stringify(bio) : null
       /* eslint-enable camelcase */
     })
-
-    return id
   }
 
   constructor(row, conn = db) {
-    super(TABLE, row, conn)
+    super(conn, TABLE, row)
   }
 
   get userId() {
@@ -62,17 +65,13 @@ class Chara extends Row {
     return this.getColumn('name')
   }
 
+  async setName(name) {
+    await this.setColumn('name', name)
+  }
+
   get bio() {
     const bioJSON = this.getColumn('bio')
     return bioJSON ? JSON.parse(bioJSON) : null
-  }
-
-  async setUserId(userId) {
-    await this.setColumn('user_id', userId)
-  }
-
-  async setName(name) {
-    await this.setColumn('name', name)
   }
 
   async setBio(bio) {

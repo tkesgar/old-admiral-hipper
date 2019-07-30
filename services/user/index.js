@@ -45,7 +45,7 @@ class UserService {
       return user
     }
 
-    const {_json: rawProfile} = profile._json
+    const rawProfile = profile._json
     const newUserId = await UserModel.insert({
       email: rawProfile.email,
       displayName: rawProfile.name,

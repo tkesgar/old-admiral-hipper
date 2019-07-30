@@ -1,16 +1,19 @@
-const Row = require('../utils/legacy-knex-utils/row')
+const Row = require('../utils/row')
 const db = require('../utils/db')
 
 const TABLE = 'chara_like'
 
 class CharaLike extends Row {
-  // TODO findAll ini direfactor ulang
-  static findAll(where, conn = db, rowFn = row => new CharaLike(row, conn)) {
-    return Row.findAll(TABLE, where, rowFn, conn)
+  static createQuery(conn = db) {
+    return Row.createQuery(conn, TABLE)
+  }
+
+  static async findAll(where, conn = db) {
+    return Row.findAll(conn, TABLE, where, row => new CharaLike(row, conn))
   }
 
   static async find(where, conn = db) {
-    return Row.find(TABLE, where, row => new CharaLike(row, conn), conn)
+    return Row.find(conn, TABLE, where, row => new CharaLike(row, conn))
   }
 
   static async findById(id, conn = db) {
@@ -32,29 +35,38 @@ class CharaLike extends Row {
     return CharaLike.findAll({user_id: userId}, conn)
   }
 
+  static async countAllByChara(charaId, conn = db) {
+    const [{'count(*)': count}] = await CharaLike.createQuery(conn)
+      .where('chara_id', charaId)
+      .count()
+
+    return count
+  }
+
+  static async countAllByUser(userId, conn = db) {
+    const [{'count(*)': count}] = await CharaLike.createQuery(conn)
+      .where('user_id', userId)
+      .count()
+
+    return count
+  }
+
   static async insert(data, conn = db) {
     const {
       charaId,
       userId
     } = data
 
-    const [id] = await conn(TABLE).insert({
+    return Row.insert(conn, TABLE, {
       /* eslint-disable camelcase */
       chara_id: charaId,
       user_id: userId
       /* eslint-enable camelcase */
     })
-
-    return id
-  }
-
-  static async countAllByChara(charaId, conn = db) {
-    const [{'count(*)': count}] = await conn(TABLE).where('chara_id', charaId).count()
-    return count
   }
 
   constructor(row, conn = db) {
-    super(TABLE, row, conn)
+    super(conn, TABLE, row)
   }
 
   get charaId() {

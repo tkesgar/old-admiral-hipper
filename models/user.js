@@ -1,8 +1,8 @@
 const upash = require('upash')
 const moment = require('moment')
-const Row = require('../utils/legacy-knex-utils/row')
+const Row = require('../utils/row')
 const db = require('../utils/db')
-const generateToken = require('../utils/token')
+const getToken = require('../utils/token')
 
 const TABLE = 'user'
 
@@ -11,12 +11,16 @@ class User extends Row {
     return moment(time).add(amount, unit).toDate()
   }
 
+  static createQuery(conn = db) {
+    return Row.createQuery(conn, TABLE)
+  }
+
   static async findAll(where, conn = db) {
-    return Row.findAll(TABLE, where, row => new User(row, conn), conn)
+    return Row.findAll(conn, TABLE, where, row => new User(row, conn))
   }
 
   static async find(where, conn = db) {
-    return Row.find(TABLE, where, row => new User(row, conn), conn)
+    return Row.find(conn, TABLE, where, row => new User(row, conn))
   }
 
   static async findById(id, conn = db) {
@@ -47,11 +51,9 @@ class User extends Row {
       googleId = null
     } = data
 
-    // TODO Handle error kalau email user sudah teregistrasi
-
     const passwordHash = password ? await upash.use('pbkdf2').hash(password) : null
 
-    const [id] = await conn(TABLE).insert({
+    return Row.insert(conn, TABLE, {
       /* eslint-disable camelcase */
       email,
       display_name: displayName,
@@ -61,12 +63,10 @@ class User extends Row {
       google_id: googleId
       /* eslint-enable camelcase */
     })
-
-    return id
   }
 
   constructor(row, conn = db) {
-    super(TABLE, row, conn)
+    super(conn, TABLE, row)
   }
 
   get email() {
@@ -158,7 +158,7 @@ class User extends Row {
   }
 
   async generateRecoverPasswordToken(time = new Date()) {
-    const token = generateToken()
+    const token = getToken()
 
     const data = {
       /* eslint-disable camelcase */
@@ -174,7 +174,7 @@ class User extends Row {
   }
 
   async generateEmailVerifyToken(time = new Date()) {
-    const token = generateToken()
+    const token = getToken()
 
     const data = {
       /* eslint-disable camelcase */

@@ -1,4 +1,4 @@
-const Row = require('../utils/legacy-knex-utils/row')
+const Row = require('../utils/row')
 const db = require('../utils/db')
 const {CUSTOM_KEY_PREFIX} = require('../utils/legacy-chara-info')
 
@@ -30,13 +30,33 @@ function getValueColumns(value) {
   }
 }
 
+function mapInsert(data) {
+  const {
+    charaId,
+    key,
+    value
+  } = data
+
+  return {
+    /* eslint-disable camelcase */
+    chara_id: charaId,
+    key,
+    ...getValueColumns(value)
+    /* eslint-enable camelcase */
+  }
+}
+
 class CharaInfo extends Row {
+  static createQuery(conn = db) {
+    return Row.createQuery(conn, TABLE)
+  }
+
   static async findAll(where, conn = db) {
-    return Row.findAll(TABLE, where, row => new CharaInfo(row, conn), conn)
+    return Row.findAll(conn, TABLE, where, row => new CharaInfo(row, conn))
   }
 
   static async find(where, conn = db) {
-    return Row.find(TABLE, where, row => new CharaInfo(row, conn), conn)
+    return Row.find(conn, TABLE, where, row => new CharaInfo(row, conn))
   }
 
   static async findById(id, conn = db) {
@@ -60,48 +80,24 @@ class CharaInfo extends Row {
     }, conn)
   }
 
-  static async insert(data, conn = db) {
-    const {
-      charaId,
-      key,
-      value
-    } = data
+  static async countAllByChara(charaId, conn = db) {
+    const [{'count(*)': count}] = await CharaInfo.createQuery(conn)
+      .where('chara_id', charaId)
+      .count()
 
-    // TODO Handle error kalau chara info sudah ada
-
-    const [id] = await conn(TABLE).insert({
-      /* eslint-disable camelcase */
-      chara_id: charaId,
-      key,
-      ...getValueColumns(value)
-      /* eslint-enable camelcase */
-    })
-
-    return id
+    return count
   }
 
-  static async insertMany(manyData, conn = db) {
-    // TODO Handle error kalau ada chara info yang sudah ada
+  static async insert(data, conn = db) {
+    return Row.insert(conn, TABLE, mapInsert(data))
+  }
 
-    await conn(TABLE).insert(manyData.map(data => {
-      const {
-        charaId,
-        key,
-        value
-      } = data
-
-      return {
-        /* eslint-disable camelcase */
-        chara_id: charaId,
-        key,
-        ...getValueColumns(value)
-        /* eslint-enable camelcase */
-      }
-    }))
+  static async insertMany(dataArray, conn = db) {
+    await Row.insert(conn, TABLE, dataArray.map(mapInsert))
   }
 
   static async deleteManyFromChara(charaId, keys, conn = db) {
-    await conn(TABLE)
+    await CharaInfo.createQuery(conn)
       .where('chara_id', charaId)
       .andWhere(function () {
         this.whereIn('key', keys)
@@ -110,16 +106,13 @@ class CharaInfo extends Row {
   }
 
   static async deleteAllFromChara(charaId, conn = db) {
-    await conn(TABLE).where('chara_id', charaId).delete()
-  }
-
-  static async countAllByChara(charaId, conn = db) {
-    const [{'count(*)': count}] = await conn(TABLE).where('chara_id', charaId).count()
-    return count
+    await CharaInfo.createQuery(conn)
+      .where('chara_id', charaId)
+      .delete()
   }
 
   constructor(row, conn = db) {
-    super(TABLE, row, conn)
+    super(conn, TABLE, row)
   }
 
   get charaId() {
@@ -130,8 +123,8 @@ class CharaInfo extends Row {
     return this.getColumn('key')
   }
 
-  get isCustom() {
-    return this.key.startsWith(CUSTOM_KEY_PREFIX)
+  async setKey(key) {
+    await this.setColumn('key', key)
   }
 
   get type() {
@@ -142,15 +135,13 @@ class CharaInfo extends Row {
     return this.getColumn(`value_${this.type}`)
   }
 
-  async setKey(key) {
-    await this.setColumn('key', key)
-  }
-
   async setValue(value) {
     const data = getValueColumns(value)
+    await this.setColumns(data)
+  }
 
-    await this.query.update(data)
-    Object.assign(this.row, data)
+  get isCustom() {
+    return this.key.startsWith(CUSTOM_KEY_PREFIX)
   }
 }
 

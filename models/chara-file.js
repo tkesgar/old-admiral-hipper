@@ -1,15 +1,35 @@
-const Row = require('../utils/legacy-knex-utils/row')
+const Row = require('../utils/row')
 const db = require('../utils/db')
 
 const TABLE = 'chara_file'
 
+function mapInsert(data) {
+  const {
+    charaId,
+    key,
+    fileId
+  } = data
+
+  return {
+    /* eslint-disable camelcase */
+    chara_id: charaId,
+    key,
+    file_id: fileId
+    /* eslint-enable camelcase */
+  }
+}
+
 class CharaFile extends Row {
+  static createQuery(conn = db) {
+    return Row.createQuery(conn)
+  }
+
   static async findAll(where, conn = db) {
-    return Row.findAll(TABLE, where, row => new CharaFile(row, conn), conn)
+    return Row.findAll(conn, TABLE, where, row => new CharaFile(row, conn))
   }
 
   static async find(where, conn = db) {
-    return Row.find(TABLE, where, row => new CharaFile(row, conn), conn)
+    return Row.find(conn, TABLE, where, row => new CharaFile(row, conn))
   }
 
   static async findById(id, conn = db) {
@@ -28,54 +48,28 @@ class CharaFile extends Row {
 
   static async findAllByCharaType(charaId, type, conn = db) {
     return CharaFile.findAll(function () {
-      this.where('chara_id', charaId)
-        .andWhere('key', 'like', `${type}%`)
+      this.where('chara_id', charaId).andWhere('key', 'like', `${type}%`)
     }, conn)
   }
 
-  static async insert(data, conn = db) {
-    const {
-      charaId,
-      key,
-      fileId
-    } = data
-
-    const [id] = await conn(TABLE).insert({
-      /* eslint-disable camelcase */
-      chara_id: charaId,
-      key,
-      file_id: fileId
-      /* eslint-enable camelcase */
-    })
-
-    return id
-  }
-
-  static async insertMany(manyData, conn = db) {
-    await conn(TABLE).insert(manyData.map(data => {
-      const {
-        charaId,
-        key,
-        fileId
-      } = data
-
-      return {
-        /* eslint-disable camelcase */
-        chara_id: charaId,
-        key,
-        file_id: fileId
-        /* eslint-enable camelcase */
-      }
-    }))
-  }
-
   static async countAllByChara(charaId, conn = db) {
-    const [{'count(*)': count}] = await conn(TABLE).where('chara_id', charaId).count()
+    const [{'count(*)': count}] = await Row.createQuery(conn, TABLE)
+      .where('chara_id', charaId)
+      .count()
+
     return count
   }
 
+  static async insert(data, conn = db) {
+    return Row.insert(conn, TABLE, mapInsert(data))
+  }
+
+  static async insertMany(dataArray, conn = db) {
+    await Row.insert(conn, TABLE, dataArray.map(mapInsert))
+  }
+
   constructor(row, conn = db) {
-    super(TABLE, row, conn)
+    super(conn, TABLE, row)
   }
 
   get charaId() {
@@ -84,6 +78,10 @@ class CharaFile extends Row {
 
   get key() {
     return this.getColumn('key')
+  }
+
+  async setKey(key) {
+    await this.setColumn('key', key)
   }
 
   get type() {
@@ -96,14 +94,6 @@ class CharaFile extends Row {
 
   get fileId() {
     return this.getColumn('file_id')
-  }
-
-  async setCharaId(charaId) {
-    await this.setColumn('chara_id', charaId)
-  }
-
-  async setKey(key) {
-    await this.setColumn('key', key)
   }
 
   async setFileId(fileId) {
