@@ -27,7 +27,9 @@ class GuardianService {
   }
 
   static async validateMany(...validateArgs) {
-    await Promise.all(validateArgs.map(args => this.validate(...args)))
+    await Promise.all(
+      validateArgs.map(args => GuardianService.validate(...args))
+    )
   }
 
   static hasSanitizer(type) {

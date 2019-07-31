@@ -4,7 +4,7 @@ const CharaInfo = require('../models/chara-info')
 const CharaFile = require('../models/chara-file')
 const File = require('../models/file')
 const db = require('../utils/db')
-const {purify} = require('../services/legacy-purify')
+const GuardianService = require('../services/guardian')
 const err = require('../utils/error')
 const FileIO = require('../services/legacy-file-io')
 const {convert} = require('../services/legacy-image')
@@ -22,26 +22,33 @@ exports.findAllByUser = async user => {
 exports.insertChara = async (user, name, bio = null, info = null) => {
   await LimiterService.limitMaxCharaPerUser(user.id)
 
-  await purify(name, 'name')
+  await GuardianService.validate('name', name)
 
-  if (bio) {
-    await purify(bio, 'bio')
-  }
+  const bioSanitized = bio ? await GuardianService.sanitize('bio', bio) : null
 
   if (info) {
-    await Promise.all(Object.entries(info).map(([key, value]) => purify({key, value}, 'chara-info')))
-    await purify(info, 'chara-info-entries')
+    await GuardianService.validateMany(
+      ...Object.entries(info)
+        .map(([key, value]) => (['chara-info', {key, value}]))
+    )
+
+    await GuardianService.validate('chara-info-entries', info)
   }
 
   try {
     const charaId = await db.transaction(async trx => {
-      const charaId = await Chara.insert({userId: user.id, name, bio}, trx)
+      const charaId = await Chara.insert({
+        userId: user.id,
+        name,
+        bio: bioSanitized
+      }, trx)
 
       if (info) {
-        const manyData = Object.entries(info)
-          .map(([key, value]) => ({charaId, key, value}))
-
-        await CharaInfo.insertMany(manyData, trx)
+        await CharaInfo.insertMany(
+          Object.entries(info)
+            .map(([key, value]) => ({charaId, key, value})),
+          trx
+        )
       }
 
       return charaId
@@ -74,15 +81,15 @@ exports.getCharaData = chara => {
 }
 
 exports.updateCharaName = async (chara, newName) => {
-  await purify(newName, 'name')
+  await GuardianService.validate('name', newName)
 
   await chara.setName(newName)
 }
 
 exports.updateCharaBio = async (chara, newBio) => {
-  await purify(newBio, 'bio')
+  const bioSanitized = await GuardianService.sanitize('bio', newBio)
 
-  await chara.setBio(newBio)
+  await chara.setBio(bioSanitized)
 }
 
 exports.deleteCharaBio = async chara => {
@@ -122,7 +129,7 @@ exports.findAllCharaInfo = async (chara, keys = null) => {
 exports.insertInfo = async (chara, key, value) => {
   await LimiterService.limitMaxInfoPerChara(chara.id)
 
-  await purify({key, value}, 'chara-info')
+  await GuardianService.validate('chara-info', {key, value})
 
   return CharaInfo.insert({charaId: chara.id, key, value})
 }
@@ -130,8 +137,11 @@ exports.insertInfo = async (chara, key, value) => {
 exports.insertManyInfo = async (chara, manyInfo) => {
   await LimiterService.limitMaxInfoPerChara(chara.id, Object.entries(manyInfo).length)
 
-  await Promise.all(Object.entries(manyInfo).map(([key, value]) => purify({key, value}, 'chara-info')))
-  await purify(manyInfo, 'chara-info-entries')
+  await GuardianService.validateMany(
+    ...Object.entries(manyInfo)
+      .map(([key, value]) => ['chara-info', {key, value}])
+  )
+  await GuardianService.validate('chara-info-entries', manyInfo)
 
   const manyData = Object.entries(manyInfo)
     .map(([key, value]) => ({charaId: chara.id, key, value}))
@@ -151,7 +161,7 @@ exports.getCharaInfoData = charaInfo => {
 }
 
 exports.updateInfo = async (charaInfo, value) => {
-  await purify({key: charaInfo.key, value}, 'chara-info')
+  await GuardianService.validate('chara-info', {key: charaInfo.key, value})
 
   const infoGroupName = getInfoGroupFromKey(charaInfo.key)
   if (infoGroupName) {
@@ -167,7 +177,7 @@ exports.updateInfo = async (charaInfo, value) => {
       subManyGroupInfo[findCharaInfo.key] = findCharaInfo.value
     }
 
-    await purify(subManyGroupInfo, 'chara-info-entries')
+    await GuardianService.validate('chara-info-entries', subManyGroupInfo)
   }
 
   await charaInfo.setValue(value)
@@ -186,7 +196,7 @@ exports.deleteInfo = async charaInfo => {
 }
 
 exports.deleteManyInfo = async (chara, charaInfoKeys) => {
-  await purify(charaInfoKeys, 'chara-info-keys')
+  await GuardianService.validate('chara-info-keys', charaInfoKeys)
 
   await CharaInfo.deleteManyFromChara(chara.id, charaInfoKeys)
 }
@@ -219,7 +229,7 @@ exports.findAllImage = async chara => {
 exports.insertImage = async (chara, type, buffer) => {
   await LimiterService.limitMaxFilePerChara(chara.id)
 
-  await purify(type, 'chara-image-type')
+  await GuardianService.validate('chara-image-type', type)
 
   return db.transaction(async trx => {
     const baseSharpInstance = sharp(buffer)

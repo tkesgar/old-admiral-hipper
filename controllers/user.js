@@ -2,7 +2,7 @@ const log = require('../utils/log')
 const err = require('../utils/error')
 const MailService = require('../services/mail')
 const User = require('../models/user')
-const {purify} = require('../services/legacy-purify')
+const GuardianService = require('../services/guardian')
 const db = require('../utils/db')
 const {getBaseURL} = require('../utils/env')
 
@@ -31,13 +31,13 @@ exports.delete = async user => {
 }
 
 exports.setEmail = async (user, email) => {
-  await purify(email, 'email')
+  await GuardianService.validate('email', email)
 
   await user.setEmail(email)
 }
 
 exports.setDisplayName = async (user, displayName) => {
-  await purify(displayName, 'display-name')
+  await GuardianService.validate('display-name', displayName)
 
   await user.setDisplayName(displayName)
 }
@@ -63,7 +63,7 @@ exports.setPassword = async (user, password, newPassword) => {
     }
   }
 
-  await purify(newPassword, 'password')
+  await GuardianService.validate('password', newPassword)
 
   await user.setPassword(newPassword)
 }
@@ -180,9 +180,11 @@ exports.verifyEmail = async token => {
 }
 
 exports.register = async (email, password, displayName = null) => {
-  await purify(email, 'email')
-  await purify(password, 'password')
-  await purify(displayName, 'display-name')
+  await GuardianService.validateMany(
+    ['email', email],
+    ['password', password],
+    ['display-name', displayName]
+  )
 
   // TODO Ini diganti dengan check di awal supaya nggak ngehabisin primary key
   try {

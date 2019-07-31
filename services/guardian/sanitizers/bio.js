@@ -1,6 +1,6 @@
 const sanitizeHtml = require('sanitize-html')
 
-const OPTS_TEXT = {
+const SANITIZE_TEXT = {
   allowedTags: ['b', 'i', 'a'],
   allowedAttributes: {
     a: ['href']
@@ -35,7 +35,7 @@ const OPTS_TEXT = {
   }
 }
 
-const OPTS_NOTAGS = {
+const SANITIZE_NOTAGS = {
   allowedTags: []
 }
 
@@ -47,22 +47,18 @@ function sanitizeDoublePass(html, opts = {}) {
   return sanitize(sanitize(html, opts), opts)
 }
 
-module.exports = (value, allowNull = false) => {
-  if (allowNull && value === null) {
-    return
-  }
-
+module.exports = value => {
   for (const block of value.blocks) {
     switch (block.type) {
       case 'paragraph':
-        block.data.text = sanitizeDoublePass(block.data.text, OPTS_TEXT)
+        block.data.text = sanitizeDoublePass(block.data.text, SANITIZE_TEXT)
         break
       case 'header':
       case 'quote':
-        block.data.text = sanitize(block.data.text, OPTS_NOTAGS)
+        block.data.text = sanitizeDoublePass(block.data.text, SANITIZE_NOTAGS)
         break
       case 'list':
-        block.data.items = block.data.items.map(item => sanitize(item, OPTS_NOTAGS))
+        block.data.items = block.data.items.map(item => sanitize(item, SANITIZE_NOTAGS))
         break
       default:
         break
