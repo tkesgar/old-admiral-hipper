@@ -1,5 +1,7 @@
 # admiral-hipper
 
+> Pindah ke: https://github.com/charaverse/admiral-hipper
+
 Original character database API
 
 ## Kebutuhan sistem
